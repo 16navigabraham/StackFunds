@@ -26,8 +26,8 @@ export default function Home() {
           Welcome to StackFund
         </h1>
         <p className="mx-auto max-w-prose text-foreground/80 md:text-lg">
-          Welcome to StackPay — Your Gateway to Seamless Web3 Payments.
-          StackPay makes it effortless to receive crypto payments on Stacks Testnet.
+          Welcome to StackFund — Your Gateway to Seamless Web3 Payments.
+          StackFund makes it effortless to receive crypto payments on Stacks Testnet.
           With Turnkey’s embedded wallet SDK, every payment link creator gets an instant wallet — no setup required.
           Simply create a payment link, share it, and receive funds directly to your wallet when payments are made.
           No custodians. No delays. Just fast, secure, decentralized payments.
