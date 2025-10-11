@@ -15,12 +15,14 @@ export default function Home() {
             <div className="relative">
               <Bitcoin className="absolute -top-4 -left-12 text-primary/50 animate-bounce w-10 h-10" />
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-                Fund Ideas. Empower Innovation.
+                Welcome to StackPay — Your Gateway to Seamless Web3 Payments.
               </h1>
             </div>
             <p className="mx-auto max-w-[700px] text-foreground/80 md:text-xl">
-              StackFund lets you support creative projects directly with sBTC —
-              no barriers, no custodians.
+              StackPay makes it effortless to receive crypto payments on Stacks Testnet.
+              With Turnkey’s embedded wallet SDK, every payment link creator gets an instant wallet — no setup required.
+              Simply create a payment link, share it, and receive funds directly to your wallet when payments are made.
+              No custodians. No delays. Just fast, secure, decentralized payments.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
               <WalletConnect />
