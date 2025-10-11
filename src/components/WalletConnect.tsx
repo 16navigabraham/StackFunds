@@ -23,7 +23,7 @@ export function WalletConnect() {
   return (
     <Button onClick={() => setIsConnected(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 transition-shadow duration-300 hover:shadow-primary/50 hover:shadow-lg">
       <Wallet className="mr-2 h-4 w-4" />
-      Connect Embedded Wallet
+      Connect Wallet
     </Button>
   );
 }
