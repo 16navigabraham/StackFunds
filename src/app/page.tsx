@@ -1,8 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { ProjectCard } from '@/components/ProjectCard';
-import { projects } from '@/lib/mock-data';
-import { Bitcoin } from 'lucide-react';
-import Link from 'next/link';
+import { Bitcoin, Wallet } from 'lucide-react';
+import { WalletConnect } from '@/components/WalletConnect';
 
 export default function Home() {
   return (
@@ -25,26 +23,8 @@ export default function Home() {
               no barriers, no custodians.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <Button asChild size="lg" className="transition-transform duration-300 hover:scale-105">
-                <Link href="/create">Create Campaign</Link>
-              </Button>
-              <Button asChild size="lg" variant="secondary" className="transition-transform duration-300 hover:scale-105">
-                <Link href="#projects">Explore Projects</Link>
-              </Button>
+              <WalletConnect />
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="projects" className="w-full py-16 lg:py-24 bg-background">
-        <div className="container px-4 md:px-6">
-          <h2 className="text-3xl font-bold tracking-tighter text-center mb-10 font-headline">
-            Active Campaigns
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
           </div>
         </div>
       </section>
