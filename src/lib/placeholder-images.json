@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "project-1",
+      "description": "A person working on a futuristic interface",
+      "imageUrl": "https://picsum.photos/seed/stackfund1/600/400",
+      "imageHint": "futuristic interface"
+    },
+    {
+      "id": "project-2",
+      "description": "A group of people collaborating on a project",
+      "imageUrl": "https://picsum.photos/seed/stackfund2/600/400",
+      "imageHint": "team collaboration"
+    },
+    {
+      "id": "project-3",
+      "description": "An artist painting on a large canvas",
+      "imageUrl": "https://picsum.photos/seed/stackfund3/600/400",
+      "imageHint": "artist painting"
+    },
+    {
+      "id": "project-4",
+      "description": "A circuit board with glowing components",
+      "imageUrl": "https://picsum.photos/seed/stackfund4/600/400",
+      "imageHint": "glowing circuit"
+    },
+    {
+      "id": "project-5",
+      "description": "A close-up of a 3D printer in action",
+      "imageUrl": "https://picsum.photos/seed/stackfund5/600/400",
+      "imageHint": "3d printer"
+    },
+    {
+      "id": "project-6",
+      "description": "A community garden with fresh vegetables",
+      "imageUrl": "https://picsum.photos/seed/stackfund6/600/400",
+      "imageHint": "community garden"
+    }
+  ]
 }
