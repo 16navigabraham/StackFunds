@@ -1,6 +1,6 @@
 "use client";
 
-import { useTurnkey } from "@turnkey/react-wallet-kit";
+import { useWallet } from "@turnkey/react-wallet-kit";
 import { Button } from "@/components/ui/button";
 import { Wallet } from 'lucide-react';
 import Link from 'next/link';
@@ -17,7 +17,7 @@ import { useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
 export function WalletConnect() {
@@ -28,7 +28,7 @@ export function WalletConnect() {
     logout,
     isConnecting,
     isCreating,
-  } = useTurnkey();
+  } = useWallet();
 
   const { firestore, user: firebaseUser } = useFirebase();
   const { toast } = useToast();

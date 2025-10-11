@@ -12,13 +12,13 @@ import { Send, Download, Loader2 } from 'lucide-react';
 import CopyButton from '@/components/CopyButton';
 import { shortenAddress } from '@/lib/utils';
 import Link from 'next/link';
-import { useTurnkey } from '@/hooks/useTurnkey';
+import { useWallet } from '@turnkey/react-wallet-kit';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WalletDashboardPage() {
-  const { user, isLoggedIn, isConnecting, isCreating } = useTurnkey();
+  const { user, isLoggedIn, isConnecting, isCreating } = useWallet();
 
-  const isLoading = !isLoggedIn || isConnecting || isCreating;
+  const isLoading = isConnecting || isCreating;
   const walletAddress = user?.wallets?.[0]?.address ?? '';
   const username = user?.organizationId ?? '';
   // TODO: Fetch real balance from Stacks API
@@ -32,14 +32,14 @@ export default function WalletDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">My Wallet</CardTitle>
-              {isLoading ? (
+              {isLoading || !isLoggedIn ? (
                 <Skeleton className="h-5 w-40 mt-1" />
               ) : (
                 <CardDescription>Welcome, {username}</CardDescription>
               )}
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? (
+              {isLoading || !isLoggedIn ? (
                 <div className="space-y-4">
                   <Skeleton className="h-10 w-2/3" />
                   <Skeleton className="h-10 w-full" />
@@ -75,7 +75,7 @@ export default function WalletDashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <Button asChild size="lg" disabled={isLoading}>
+                <Button asChild size="lg" disabled={isLoading || !isLoggedIn}>
                     <Link href="/create">
                       {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                       Create New Link

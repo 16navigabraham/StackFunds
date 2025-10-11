@@ -20,7 +20,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTurnkey } from "@/hooks/useTurnkey";
+import { useWallet } from "@turnkey/react-wallet-kit";
 
 
 const formSchema = z.object({
@@ -36,7 +36,7 @@ const formSchema = z.object({
 export default function CreateCampaignPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const router = useRouter();
-  const { user } = useTurnkey();
+  const { user } = useWallet();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

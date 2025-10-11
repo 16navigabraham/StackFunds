@@ -1,12 +1,12 @@
 "use client";
 
 import { WalletConnect } from "@/components/WalletConnect";
-import { useTurnkey } from "@/hooks/useTurnkey";
+import { useWallet } from "@turnkey/react-wallet-kit";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { isLoggedIn } = useTurnkey();
+  const { isLoggedIn } = useWallet();
   const router = useRouter();
 
   useEffect(() => {
