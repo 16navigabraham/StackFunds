@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { shortenAddress } from "@/lib/utils";
 import { useFirebase } from "@/firebase";
-import { useEffect, useState } from "react";
+import { useEffect, useState }from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -29,7 +29,6 @@ export function WalletConnect() {
   const [user, setUser] = useState<any>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const { firestore, user: firebaseUser } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -73,13 +72,51 @@ export function WalletConnect() {
         await checkSession();
         router.push("/wallet");
       }
-    } catch (error) {
-      console.error("Login failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Could not log in with passkey. You may need to sign up first.",
-      });
+    } catch (loginError) {
+      console.log("Login failed, attempting signup:", loginError);
+      // If login fails, it might be because the user is new. Let's try signup.
+      try {
+        const passkeyClient = turnkey.passkeyClient();
+        const indexedDbClient = await turnkey.indexedDbClient();
+        await indexedDbClient.init();
+        const publicKey = await indexedDbClient.getPublicKey();
+
+        // This requires a server-side endpoint to create a sub-organization.
+        // For now, we assume the passkey is for the main org.
+        // In a real multi-tenant app, you'd create a sub-org first.
+        const passkey = await passkeyClient.createUserPasskey({
+           publicKey: {
+             rp: { name: "StackFund" },
+             user: { 
+               name: `user-${Date.now()}`,
+               displayName: `User ${Date.now()}`
+             },
+           },
+         });
+
+        const session = await passkeyClient.loginWithPasskey({
+            sessionType: "SESSION_TYPE_READ_WRITE",
+            publicKey,
+            expirationSeconds: 900,
+        });
+
+        if (session) {
+            toast({
+                title: "Signup Successful",
+                description: "Welcome to StackFund!",
+            });
+            await checkSession();
+            router.push("/wallet");
+        }
+
+      } catch (signupError) {
+         console.error("Signup also failed:", signupError);
+         toast({
+            variant: "destructive",
+            title: "Authentication Failed",
+            description: "Could not sign up or log in. Please try again.",
+        });
+      }
     } finally {
       setIsConnecting(false);
     }
