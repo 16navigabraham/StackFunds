@@ -32,7 +32,7 @@ export default function RootLayout({
           <FirebaseClientProvider>
             <div className="relative flex min-h-dvh flex-col bg-background">
               <Header />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 flex flex-col">{children}</main>
               <Footer />
             </div>
             <Toaster />

@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { user } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTurnkey } from "@/hooks/useTurnkey";
 
 
 const formSchema = z.object({
@@ -36,6 +36,7 @@ const formSchema = z.object({
 export default function CreateCampaignPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const router = useRouter();
+  const { user } = useTurnkey();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,7 +63,7 @@ export default function CreateCampaignPage() {
       <div className="container max-w-3xl py-12 md:py-20">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-3xl">Launch Your Idea</CardTitle>
+            <CardTitle className="font-headline text-3xl">Create a Payment Link</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -72,9 +73,9 @@ export default function CreateCampaignPage() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Project Title</FormLabel>
+                      <FormLabel>Link Title</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Decentralized AI Network" {...field} />
+                        <Input placeholder="e.g. My Awesome Project" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -88,13 +89,13 @@ export default function CreateCampaignPage() {
                       <FormLabel>Short Description</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="A quick summary of your project."
+                          placeholder="A quick summary of what this link is for."
                           className="resize-none"
                           {...field}
                         />
                       </FormControl>
                        <FormDescription>
-                        This will be shown on the project card. Max 150 characters.
+                        This will be shown on the payment page. Max 150 characters.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -106,7 +107,7 @@ export default function CreateCampaignPage() {
                     name="goal"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Funding Goal (sBTC)</FormLabel>
+                        <FormLabel>Amount (sBTC)</FormLabel>
                         <FormControl>
                             <Input type="number" step="0.01" {...field} />
                         </FormControl>
@@ -119,7 +120,7 @@ export default function CreateCampaignPage() {
                     name="duration"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Duration (days)</FormLabel>
+                        <FormLabel>Link Expiration (days)</FormLabel>
                         <FormControl>
                             <Input type="number" {...field} />
                         </FormControl>
@@ -129,22 +130,24 @@ export default function CreateCampaignPage() {
                     />
                 </div>
                 
-                 <div className="space-y-2 rounded-lg border p-4">
-                    <h4 className="text-sm font-medium">Creator Details</h4>
-                    <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold">Creator Name:</span> {user.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        <span className="font-semibold">Wallet Address:</span> {user.address}
-                    </p>
-                    <p className="text-xs text-muted-foreground pt-2">
-                        These details are automatically filled from your connected wallet.
-                    </p>
-                </div>
+                 {user && user.wallets[0] && (
+                    <div className="space-y-2 rounded-lg border p-4">
+                        <h4 className="text-sm font-medium">Creator Details</h4>
+                         <p className="text-sm text-muted-foreground">
+                            <span className="font-semibold">Creator Name:</span> {user.organizationId}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            <span className="font-semibold">Wallet Address:</span> {user.wallets[0].address}
+                        </p>
+                        <p className="text-xs text-muted-foreground pt-2">
+                            These details are automatically filled from your connected wallet.
+                        </p>
+                    </div>
+                )}
 
 
                 <Button type="submit" size="lg" className="w-full">
-                  Create Campaign
+                  Create Payment Link
                 </Button>
               </form>
             </Form>
@@ -158,19 +161,19 @@ export default function CreateCampaignPage() {
             <div className="rounded-full bg-accent/10 p-3">
               <CheckCircle className="h-10 w-10 text-accent" />
             </div>
-            <DialogTitle className="text-2xl font-bold">Campaign Created!</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Payment Link Created!</DialogTitle>
             <DialogDescription>
-              Your project is now live. Start sharing your link to get funded.
+              Your link is now live. Start sharing it to get paid.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center space-y-4 p-4 bg-muted/50 rounded-lg">
             <QrCode className="h-24 w-24" />
             <p className="text-sm font-mono break-all text-muted-foreground">
-                stack.fund/projects/new-project-id
+                stack.fund/pay/new-payment-id
             </p>
           </div>
           <Button onClick={handleModalClose} className="w-full">
-            View My Campaigns
+            View My Wallet
           </Button>
         </DialogContent>
       </Dialog>
