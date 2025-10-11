@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { shortenAddress } from "@/lib/utils";
 import { useFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
@@ -41,7 +39,7 @@ export function WalletConnect() {
       setIsLoggedIn(true);
       setUser({
         organizationId: session.organizationId,
-        wallets: [{ address: "Loading..."}] // Placeholder
+        // In a real app, you would fetch more user/wallet details here
       })
     } else {
       setIsLoggedIn(false);
@@ -67,22 +65,20 @@ export function WalletConnect() {
         expirationSeconds: 900,
       });
 
-      if (session && firebaseUser) {
-        // This part would need adjustment as we don't have wallet details right away
-        // For now, let's just log in and redirect
+      if (session) {
         toast({
           title: "Login Successful",
           description: `Welcome back!`,
         });
+        await checkSession();
         router.push("/wallet");
       }
-      checkSession();
     } catch (error) {
       console.error("Login failed:", error);
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Could not log in with passkey.",
+        description: "Could not log in with passkey. You may need to sign up first.",
       });
     } finally {
       setIsConnecting(false);

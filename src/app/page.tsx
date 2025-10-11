@@ -43,7 +43,7 @@ export default function Home() {
           No custodians. No delays. Just fast, secure, decentralized payments.
         </p>
         <div className="flex justify-center">
-          <WalletConnect />
+          {!isLoggedIn && <WalletConnect />}
         </div>
       </div>
     </div>
