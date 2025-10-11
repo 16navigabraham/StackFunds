@@ -1,6 +1,6 @@
 "use client";
 
-import { useTurnkey } from "@/hooks/useTurnkey";
+import { useTurnkey } from "@turnkey/react-wallet-kit";
 import { Button } from "@/components/ui/button";
 import { Wallet } from 'lucide-react';
 import Link from 'next/link';
@@ -62,7 +62,7 @@ export function WalletConnect() {
     ? 'Connecting...'
     : isCreating
     ? 'Creating Wallet...'
-    : 'Connect Wallet';
+    : 'Get Started';
 
   if (isLoggedIn && user) {
     return (
