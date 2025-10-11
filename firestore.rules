@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profiles.
+     * @path /users/{userId}
+     * @allow (create) Authenticated user creating their own profile.
+     * @allow (get, update, delete) Authenticated user accessing their own profile.
+     * @deny (create) Authenticated user trying to create a profile with a different userId.
+     * @deny (get, update, delete) Authenticated user trying to access another user's profile.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && exists(resource);
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to user wallets.
+     * @path /users/{userId}/wallets/{walletId}
+     * @allow (create) Authenticated user creating a wallet for themselves.
+     * @allow (get, update, delete) Authenticated user accessing their own wallet.
+     * @deny (create) Authenticated user trying to create a wallet for a different userId.
+     * @deny (get, update, delete) Authenticated user trying to access another user's wallet.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/wallets/{walletId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && exists(resource);
+      }
+      
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to crowdfunding campaigns.
+     * @path /campaigns/{campaignId}
+     * @allow (get, list) Public read access for all campaigns.
+     * @allow (create) Authenticated user creating a campaign with their userId as creatorId.
+     * @allow (update, delete) Authenticated user updating/deleting their own campaign.
+     * @deny (create) Authenticated user trying to create a campaign with a different creatorId.
+     * @deny (update, delete) Authenticated user trying to update/delete another user's campaign.
+     * @principle Public read, owner-only writes, and relational integrity validation.
+     */
+    match /campaigns/{campaignId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(creatorId) {
+        return request.auth.uid == creatorId;
+      }
+
+      function isExistingOwner(campaignId) {
+        return get(/databases/$(database)/documents/campaigns/$(campaignId)).data.creatorId == request.auth.uid && exists(resource);
+      }
+
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.resource.data.creatorId == request.auth.uid;
+      allow update: if isSignedIn() && isExistingOwner(campaignId);
+      allow delete: if isSignedIn() && isExistingOwner(campaignId);
+    }
+
+    /**
+     * @description Controls access to payment links associated with campaigns.
+     * @path /campaigns/{campaignId}/paymentLinks/{paymentLinkId}
+     * @allow (create) Campaign creator creating a payment link for their campaign.
+     * @allow (get, list, update, delete) Campaign creator accessing/managing payment links for their campaign.
+     * @deny (create) Authenticated user trying to create a payment link for a campaign they don't own.
+     * @deny (get, list, update, delete) Authenticated user trying to access/manage payment links for a campaign they don't own.
+     * @principle Inherits ownership from the parent campaign.
+     */
+    match /campaigns/{campaignId}/paymentLinks/{paymentLinkId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isCampaignOwner(campaignId) {
+        return get(/databases/$(database)/documents/campaigns/$(campaignId)).data.creatorId == request.auth.uid;
+      }
+
+      function isExistingCampaignOwner(campaignId) {
+          return isCampaignOwner(campaignId) && exists(resource);
+      }
+
+      allow get: if isSignedIn() && isCampaignOwner(campaignId);
+      allow list: if false;
+      allow create: if isSignedIn() && isCampaignOwner(campaignId);
+      allow update: if isSignedIn() && isExistingCampaignOwner(campaignId);
+      allow delete: if isSignedIn() && isExistingCampaignOwner(campaignId);
+    }
+  }
+}

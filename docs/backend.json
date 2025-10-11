@@ -1,0 +1,260 @@
+{
+  "entities": {
+    "UserWallet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserWallet",
+      "type": "object",
+      "description": "Stores user wallet information, including the connected wallet, embedded wallet address, and username.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user wallet entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user. (Relationship: User 1:1 UserWallet)"
+        },
+        "username": {
+          "type": "string",
+          "description": "The username associated with the wallet."
+        },
+        "embeddedWalletAddress": {
+          "type": "string",
+          "description": "The address of the user's embedded wallet."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the wallet entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the wallet entry was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "username",
+        "embeddedWalletAddress"
+      ]
+    },
+    "Campaign": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Campaign",
+      "type": "object",
+      "description": "Stores information about crowdfunding campaigns.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the campaign."
+        },
+        "creatorId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Campaign)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the campaign."
+        },
+        "shortDescription": {
+          "type": "string",
+          "description": "A brief description of the campaign."
+        },
+        "fundingGoal": {
+          "type": "number",
+          "description": "The funding goal for the campaign in sBTC."
+        },
+        "duration": {
+          "type": "number",
+          "description": "The duration of the campaign in days."
+        },
+        "imageURL": {
+          "type": "string",
+          "description": "URL of the campaign image.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the campaign was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the campaign was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "creatorId",
+        "title",
+        "shortDescription",
+        "fundingGoal",
+        "duration"
+      ]
+    },
+    "PaymentLink": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentLink",
+      "type": "object",
+      "description": "Stores information about payment links for sBTC and Stacks on testnet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payment link."
+        },
+        "campaignId": {
+          "type": "string",
+          "description": "Reference to Campaign. (Relationship: Campaign 1:N PaymentLink)"
+        },
+        "sBTCLink": {
+          "type": "string",
+          "description": "The payment link for sBTC transactions.",
+          "format": "uri"
+        },
+        "stacksLink": {
+          "type": "string",
+          "description": "The payment link for Stacks transactions.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the payment link was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the payment link was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "campaignId",
+        "sBTCLink",
+        "stacksLink"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Stores user information",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's username."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  This collection is primarily used for authentication and basic user information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to Firebase auth uid."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/wallets/{walletId}",
+        "definition": {
+          "entityName": "UserWallet",
+          "schema": {
+            "$ref": "#/backend/entities/UserWallet"
+          },
+          "description": "Stores user wallet information, including connected wallet, embedded wallet address, and username.  Owned by the user specified in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (owner of the wallet)."
+            },
+            {
+              "name": "walletId",
+              "description": "The unique identifier for the user's wallet."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/campaigns/{campaignId}",
+        "definition": {
+          "entityName": "Campaign",
+          "schema": {
+            "$ref": "#/backend/entities/Campaign"
+          },
+          "description": "Stores crowdfunding campaign information. Includes 'creatorId' to identify the campaign owner.",
+          "params": [
+            {
+              "name": "campaignId",
+              "description": "The unique identifier for the campaign."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/campaigns/{campaignId}/paymentLinks/{paymentLinkId}",
+        "definition": {
+          "entityName": "PaymentLink",
+          "schema": {
+            "$ref": "#/backend/entities/PaymentLink"
+          },
+          "description": "Stores payment links associated with a specific campaign.",
+          "params": [
+            {
+              "name": "campaignId",
+              "description": "The unique identifier for the parent campaign."
+            },
+            {
+              "name": "paymentLinkId",
+              "description": "The unique identifier for the payment link."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability, aligning with the core design principles. It leverages path-based ownership for user-specific data and dedicated collections for collaborative content. The design avoids using `get()` calls in security rules by denormalizing authorization data where necessary.\n\n*   **User Wallets:** Each user has their own collection of wallets under `/users/{userId}/wallets/{walletId}`, ensuring that wallets are only accessible to the owning user. This is a standard and secure way to manage private user data.\n*   **Campaigns:** Campaigns are stored in a top-level `/campaigns/{campaignId}` collection. The `creatorId` is used to identify the campaign owner, enabling secure listing of campaigns based on ownership without needing complex queries or rules.\n*   **Payment Links:** Payment links associated with campaigns are stored within a subcollection `/campaigns/{campaignId}/paymentLinks/{paymentLinkId}`. This establishes a clear parent-child relationship, facilitating easier management and querying of payment links within a specific campaign.\n\nThis structure supports the required QAPs by:\n\n1.  **Authorization Independence:** The structure avoids hierarchical authorization dependencies. Access control is based on direct ownership (`creatorId` for campaigns, `userId` for user wallets), eliminating the need for `get()` calls in security rules.\n2.  **Secure Listing (QAPs):** The segregation of user-owned data into path-based structures and global data in top-level collections allows for secure and efficient listing of resources.\n3.  **Clear Ownership:** Path-based ownership for user wallets and the explicit `creatorId` field in the campaigns collection establish clear ownership, simplifying security rules and improving overall data integrity."
+  }
+}
