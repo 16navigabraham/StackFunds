@@ -16,12 +16,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@turnkey/react-wallet-kit";
+import { Turnkey } from "@turnkey/sdk-browser";
 
+const turnkey = new Turnkey({
+  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+});
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
@@ -36,7 +40,20 @@ const formSchema = z.object({
 export default function CreateCampaignPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const router = useRouter();
-  const { user } = useWallet();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const session = await turnkey.getSession();
+      if (session) {
+        setUser({
+          organizationId: session.organizationId,
+          wallets: [{ address: 'ST...placeholder'}]
+        });
+      }
+    };
+    fetchUser();
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

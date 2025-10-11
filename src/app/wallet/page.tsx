@@ -12,13 +12,36 @@ import { Send, Download, Loader2 } from 'lucide-react';
 import CopyButton from '@/components/CopyButton';
 import { shortenAddress } from '@/lib/utils';
 import Link from 'next/link';
-import { useWallet } from '@turnkey/react-wallet-kit';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState } from 'react';
+import { Turnkey } from '@turnkey/sdk-browser';
+
+const turnkey = new Turnkey({
+  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+});
 
 export default function WalletDashboardPage() {
-  const { user, isLoggedIn, isConnecting, isCreating } = useWallet();
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const isLoading = isConnecting || isCreating;
+  useEffect(() => {
+    const fetchUser = async () => {
+      setIsLoading(true);
+      const session = await turnkey.getSession();
+      if (session) {
+        // In a real app, you'd fetch wallet details from Turnkey API
+        // For now, we'll simulate it.
+        setUser({
+          organizationId: session.organizationId,
+          wallets: [{ address: 'ST...placeholder'}]
+        });
+      }
+      setIsLoading(false);
+    };
+    fetchUser();
+  }, []);
+
   const walletAddress = user?.wallets?.[0]?.address ?? '';
   const username = user?.organizationId ?? '';
   // TODO: Fetch real balance from Stacks API
@@ -32,14 +55,14 @@ export default function WalletDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">My Wallet</CardTitle>
-              {isLoading || !isLoggedIn ? (
+              {isLoading ? (
                 <Skeleton className="h-5 w-40 mt-1" />
               ) : (
                 <CardDescription>Welcome, {username}</CardDescription>
               )}
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading || !isLoggedIn ? (
+              {isLoading ? (
                 <div className="space-y-4">
                   <Skeleton className="h-10 w-2/3" />
                   <Skeleton className="h-10 w-full" />
@@ -75,7 +98,7 @@ export default function WalletDashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <Button asChild size="lg" disabled={isLoading || !isLoggedIn}>
+                <Button asChild size="lg" disabled={isLoading}>
                     <Link href="/create">
                       {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                       Create New Link

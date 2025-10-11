@@ -1,6 +1,6 @@
 "use client";
 
-import { useWallet } from "@turnkey/react-wallet-kit";
+import { Turnkey } from "@turnkey/sdk-browser";
 import { Button } from "@/components/ui/button";
 import { Wallet } from 'lucide-react';
 import Link from 'next/link';
@@ -16,52 +16,89 @@ import { shortenAddress } from "@/lib/utils";
 import { useFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
+
+const turnkey = new Turnkey({
+  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+});
+
 export function WalletConnect() {
-  const {
-    user,
-    isLoggedIn,
-    handleLogin,
-    logout,
-    isConnecting,
-    isCreating,
-  } = useWallet();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const { firestore, user: firebaseUser } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    if (isLoggedIn && user && user.wallets[0] && firestore && firebaseUser) {
-      const turnkeyWallet = user.wallets[0];
-      const userWalletRef = doc(firestore, `users/${firebaseUser.uid}/wallets/${turnkeyWallet.id}`);
-
-      const walletData = {
-        id: turnkeyWallet.id,
-        userId: firebaseUser.uid,
-        username: user.organizationId, // Using organizationId as username
-        embeddedWalletAddress: turnkeyWallet.address,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      setDocumentNonBlocking(userWalletRef, walletData, { merge: true });
-
-      toast({
-        title: "Wallet Connected",
-        description: `Your wallet ${shortenAddress(turnkeyWallet.address)} has been connected and saved.`,
-      });
-      router.push("/wallet");
+  const checkSession = async () => {
+    const session = await turnkey.getSession();
+    if (session && session.expiry * 1000 > Date.now()) {
+      setIsLoggedIn(true);
+      setUser({
+        organizationId: session.organizationId,
+        wallets: [{ address: "Loading..."}] // Placeholder
+      })
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
     }
-  }, [isLoggedIn, user, firestore, firebaseUser, toast, router]);
+  };
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const handleLogin = async () => {
+    setIsConnecting(true);
+    try {
+      const passkeyClient = turnkey.passkeyClient();
+      const indexedDbClient = await turnkey.indexedDbClient();
+      await indexedDbClient.init();
+      const publicKey = await indexedDbClient.getPublicKey();
+      
+      const session = await passkeyClient.loginWithPasskey({
+        sessionType: "SESSION_TYPE_READ_WRITE",
+        publicKey,
+        expirationSeconds: 900,
+      });
+
+      if (session && firebaseUser) {
+        // This part would need adjustment as we don't have wallet details right away
+        // For now, let's just log in and redirect
+        toast({
+          title: "Login Successful",
+          description: `Welcome back!`,
+        });
+        router.push("/wallet");
+      }
+      checkSession();
+    } catch (error) {
+      console.error("Login failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Could not log in with passkey.",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const logout = async () => {
+    await turnkey.logout();
+    setIsLoggedIn(false);
+    setUser(null);
+    router.push("/");
+  };
+
 
   const buttonText = isConnecting
     ? 'Connecting...'
-    : isCreating
-    ? 'Creating Wallet...'
     : 'Get Started';
 
   if (isLoggedIn && user) {
@@ -70,7 +107,7 @@ export function WalletConnect() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
              <Wallet className="mr-2 h-4 w-4" />
-             {user.wallets[0] ? shortenAddress(user.wallets[0].address) : "Wallet"}
+             {user.organizationId ? shortenAddress(user.organizationId) : "Wallet"}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -90,7 +127,7 @@ export function WalletConnect() {
   return (
     <Button 
       onClick={handleLogin}
-      disabled={isConnecting || isCreating}
+      disabled={isConnecting}
       className="bg-primary text-primary-foreground hover:bg-primary/90 transition-shadow duration-300 hover:shadow-primary/50 hover:shadow-lg"
     >
       <Wallet className="mr-2 h-4 w-4" />

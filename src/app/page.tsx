@@ -1,19 +1,29 @@
 "use client";
 
 import { WalletConnect } from "@/components/WalletConnect";
-import { useWallet } from "@turnkey/react-wallet-kit";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Turnkey } from "@turnkey/sdk-browser";
+
+const turnkey = new Turnkey({
+  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+});
 
 export default function Home() {
-  const { isLoggedIn } = useWallet();
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      router.push("/wallet");
-    }
-  }, [isLoggedIn, router]);
+    const checkLoginStatus = async () => {
+      const session = await turnkey.getSession();
+      if (session && session.expiry * 1000 > Date.now()) {
+        setIsLoggedIn(true);
+        router.push("/wallet");
+      }
+    };
+    checkLoginStatus();
+  }, [router]);
 
   return (
     <div className="flex flex-col flex-1 items-center justify-center text-center p-4">
