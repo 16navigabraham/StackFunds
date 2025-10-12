@@ -6,17 +6,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { FirebaseClientProvider } from '@/firebase';
-import {
-  TurnkeyProvider,
-  TurnkeyProviderConfig,
-} from "@turnkey/react-wallet-kit";
+import { TurnkeyProvider } from "@turnkey/sdk-react";
+import "@turnkey/sdk-react/styles.css";
+
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-const turnkeyConfig: TurnkeyProviderConfig = {
-  organizationId:"env 9346084e-abdf-4ff1-98c7-084c40cbba7c!",
-  authProxyConfigId:"env ac7f0624-a25a-4f56-9748-b98cdbe3fdb8!",
-};
 export const metadata: Metadata = {
   title: 'StackFund: Bitcoin Crowdfunding',
   description: 'Fund Ideas. Empower Innovation with Bitcoin.',
@@ -35,14 +30,21 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <FirebaseClientProvider>
-          <div className="relative flex min-h-dvh flex-col bg-background">
-            <Header />
-            <main className="flex-1 flex flex-col">{children}</main>
-            <Footer />
-          </div>
-          <Toaster />
-        </FirebaseClientProvider>
+        <TurnkeyProvider
+          config={{
+            apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+            defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+          }}
+        >
+          <FirebaseClientProvider>
+            <div className="relative flex min-h-dvh flex-col bg-background">
+              <Header />
+              <main className="flex-1 flex flex-col">{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
+          </FirebaseClientProvider>
+        </TurnkeyProvider>
       </body>
     </html>
   );

@@ -14,31 +14,23 @@ import { shortenAddress } from '@/lib/utils';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
-import { Turnkey } from '@turnkey/sdk-browser';
-import type { TWallet } from '@turnkey/sdk-browser';
-
-const turnkey = new Turnkey({
-  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
-  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
-});
+import { useTurnkey, TWallet } from '@turnkey/sdk-react';
 
 export default function WalletDashboardPage() {
-  const [user, setUser] = useState<any>(null);
+  const { user, getWallets } = useTurnkey();
   const [wallets, setWallets] = useState<TWallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserAndWallets = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
-        const session = await turnkey.getSession();
-        if (session) {
-          setUser({
-            organizationId: session.organizationId,
-          });
-          const walletData = await turnkey.getWallets();
-          setWallets(walletData.wallets);
-        }
+        const walletData = await getWallets();
+        setWallets(walletData);
       } catch (e) {
         console.error("Error fetching user or wallets", e);
       } finally {
@@ -46,10 +38,10 @@ export default function WalletDashboardPage() {
       }
     };
     fetchUserAndWallets();
-  }, []);
+  }, [user, getWallets]);
 
   const walletAddress = wallets[0]?.accounts[0]?.address ?? '';
-  const username = user?.organizationId ?? '';
+  const username = user?.organization.organizationName ?? '';
   // TODO: Fetch real balance from Stacks API
   const balance = 0.00;
 
@@ -61,7 +53,7 @@ export default function WalletDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">My Wallet</CardTitle>
-              {isLoading ? (
+              {isLoading || !user ? (
                 <Skeleton className="h-5 w-40 mt-1" />
               ) : (
                 <CardDescription>Welcome, {shortenAddress(username, 6)}</CardDescription>

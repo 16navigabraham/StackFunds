@@ -2,28 +2,22 @@
 
 import { WalletConnect } from "@/components/WalletConnect";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Turnkey } from "@turnkey/sdk-browser";
-
-const turnkey = new Turnkey({
-  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
-  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
-});
+import { useEffect } from "react";
+import { useTurnkey } from "@turnkey/sdk-react";
 
 export default function Home() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const { getSession } = useTurnkey();
+  
   useEffect(() => {
     const checkLoginStatus = async () => {
-      const session = await turnkey.getSession();
-      if (session && session.expiry * 1000 > Date.now()) {
-        setIsLoggedIn(true);
+      const session = await getSession();
+      if (session && session.isLoggedIn) {
         router.push("/wallet");
       }
     };
     checkLoginStatus();
-  }, [router]);
+  }, [getSession, router]);
 
   return (
     <div className="flex flex-col flex-1 items-center justify-center text-center p-4">
@@ -43,7 +37,7 @@ export default function Home() {
           No custodians. No delays. Just fast, secure, decentralized payments.
         </p>
         <div className="flex justify-center">
-          {!isLoggedIn && <WalletConnect />}
+          <WalletConnect />
         </div>
       </div>
     </div>
