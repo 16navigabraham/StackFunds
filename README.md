@@ -14,7 +14,7 @@ This project is built with a modern, robust, and scalable tech stack:
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
 - **Wallet & Auth**: [Turnkey](https://turnkey.com) for Embedded Wallets and Passkey (WebAuthn) Authentication
-- **Blockchain**: [Stacks](https://www.stacks.co/) for sBTC payments (on Testnet)
+- **Blockchain**: [Stacks](https://www.stacks.co/) for sBTC payments (on Testnet4)
 - **Deployment**: Ready for deployment on platforms like Firebase App Hosting or Vercel.
 
 ## Key Features
@@ -109,7 +109,7 @@ The authentication system is the heart of this application. Here’s how it work
 3.  **Sub-Organization Creation (Backend)**:
     - The backend API receives the request.
     - It uses the server-side Turnkey SDK to create a new **sub-organization** for the user. This is a critical security step that isolates the user's data.
-    - It then immediately creates a new private key within that sub-organization, configured for the **Stacks blockchain (`ADDRESS_FORMAT_STACKS`)**.
+    - It then immediately creates a new private key within that sub-organization, configured for Bitcoin testnet addresses (`ADDRESS_FORMAT_BITCOIN_TESTNET_P2WPKH`) which are compatible with Stacks testnet4 and sBTC.
     - The API returns the new `subOrgId` to the frontend.
 4.  **Passkey Creation (Frontend)**:
     - The frontend receives the `subOrgId`.

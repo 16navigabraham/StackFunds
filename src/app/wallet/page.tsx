@@ -1,13 +1,10 @@
 
 "use client";
 
-import { useTurnkey } from "@turnkey/sdk-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MessageSigner from "@/components/MessageSigner";
 import WalletManagement from "@/components/WalletManagement";
-import type { TWallet } from "@turnkey/sdk-browser";
-
 
 interface UserSession {
   userId: string;
@@ -17,47 +14,52 @@ interface UserSession {
 }
 
 export default function WalletDashboardPage() {
-  const { user, isUserLoading, logout, getWallets } = useTurnkey();
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isUserLoading) {
-      return; 
-    }
-    if (!user) {
-      router.push("/auth");
-      return;
-    }
-
     const loadUserDetails = async () => {
       try {
-        const wallets = await getWallets();
-        const primaryWallet = wallets?.wallets?.[0];
+        // Get user info from localStorage
+        const subOrgId = localStorage.getItem("turnkey_user_sub_org_id");
+        const storedEmail = localStorage.getItem("turnkey_user_email");
+        const storedWalletAddress = localStorage.getItem("turnkey_wallet_address");
+        
+        if (!subOrgId) {
+          console.warn("No user session found, redirecting to auth");
+          router.push("/auth");
+          return;
+        }
 
         setUserInfo({
-          userId: user.id,
-          organizationId: user.organization.id,
-          walletAddress: primaryWallet?.accounts[0]?.address,
-          email: user.email,
+          userId: subOrgId.slice(0, 8) + "...", // Show first 8 chars of sub-org ID
+          organizationId: subOrgId,
+          walletAddress: storedWalletAddress || "Wallet not created yet",
+          email: storedEmail || "Unknown",
         });
       } catch (error) {
         console.error("Failed to load user details:", error);
+        router.push("/auth");
       } finally {
         setLoading(false);
       }
     };
     
     loadUserDetails();
-  }, [user, isUserLoading, router, getWallets]);
+  }, [router]);
 
   const handleLogout = async () => {
-    await logout();
+    // Clear localStorage
+    localStorage.removeItem("turnkey_user_sub_org_id");
+    localStorage.removeItem("turnkey_user_email");
+    localStorage.removeItem("turnkey_wallet_address");
+    localStorage.removeItem("turnkey_wallet_id");
+    
     router.push("/");
   };
 
-  if (loading || isUserLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-lg">Loading your dashboard...</div>

@@ -3,7 +3,7 @@
 
 import { useTurnkey } from "@turnkey/sdk-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import Link from "next/link";
 
 
 export default function SignupPage() {
-  const { passkeyClient } = useTurnkey();
+  const { passkeyClient, authIframeClient } = useTurnkey();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -22,6 +22,24 @@ export default function SignupPage() {
   const [step, setStep] = useState<"email" | "passkey">("email");
 
   const [userSubOrgId, setUserSubOrgId] = useState("");
+  const [isWebAuthnSupported, setIsWebAuthnSupported] = useState(true);
+
+  // Check WebAuthn support on component mount
+  useEffect(() => {
+    const checkWebAuthnSupport = () => {
+      const isSupported = 
+        typeof window !== 'undefined' && 
+        window.PublicKeyCredential && 
+        typeof window.PublicKeyCredential === 'function';
+      setIsWebAuthnSupported(isSupported);
+      
+      if (!isSupported) {
+        console.warn('WebAuthn not supported in this browser');
+      }
+    };
+    
+    checkWebAuthnSupport();
+  }, []);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +59,14 @@ export default function SignupPage() {
         throw new Error(errorData.error || "Failed to create account");
       }
 
-      const { subOrgId, walletAddress } = await response.json();
+      const { subOrgId, walletId, walletAddress, message } = await response.json();
       
       console.log("✅ Sub-organization created:", subOrgId);
-      console.log("✅ Wallet address:", walletAddress);
-
+      
       // Store the sub-org ID for the next step
       setUserSubOrgId(subOrgId);
       
-      // Move to passkey creation step
+      // Move to passkey creation step - wallet will be created after auth
       setStep("passkey");
       
     } catch (err: any) {
@@ -99,11 +116,50 @@ export default function SignupPage() {
         console.log("✅ Passkey created successfully");
         console.log("Credential ID:", authenticator.credentialId);
         
-        // Store the sub-org ID for future logins
+        // Store authentication info
         localStorage.setItem("turnkey_user_sub_org_id", userSubOrgId);
         localStorage.setItem("turnkey_user_email", email);
         
-        // Redirect to dashboard
+        // NOW create wallet using the authenticated user's context
+        console.log("🔐 Creating embedded wallet for authenticated user...");
+        try {
+          // Use the authenticated iframe client to create wallet in user's sub-org
+          const walletResult = await authIframeClient?.createWallet({
+            walletName: "Default Stacks Wallet",
+            accounts: [
+              {
+                curve: "CURVE_SECP256K1",
+                pathFormat: "PATH_FORMAT_BIP32",
+                path: "m/44'/5757'/0'/0/0", // Stacks derivation path
+                addressFormat: "ADDRESS_FORMAT_BITCOIN_TESTNET_P2WPKH",
+              }
+            ]
+          });
+
+          if (walletResult?.walletId && walletResult?.addresses?.length > 0) {
+            const walletAddress = walletResult.addresses[0];
+            console.log("✅ Embedded wallet created successfully:", walletAddress);
+            console.log("✅ Wallet ID:", walletResult.walletId);
+            
+            // Store wallet info in localStorage for immediate access
+            localStorage.setItem("turnkey_wallet_address", walletAddress);
+            localStorage.setItem("turnkey_wallet_id", walletResult.walletId);
+            localStorage.setItem("walletInfo", JSON.stringify({
+              walletId: walletResult.walletId,
+              address: walletAddress,
+              organizationId: userSubOrgId
+            }));
+          } else {
+            console.warn("⚠️ Wallet creation returned unexpected result:", walletResult);
+          }
+          
+        } catch (walletError: any) {
+          console.warn("⚠️ Wallet creation had issues:", walletError.message);
+          // Don't fail the entire signup if wallet creation fails
+          // User can create wallet later from the dashboard
+        }
+        
+        console.log("🎉 Signup complete! Redirecting to wallet dashboard...");
         router.push("/wallet");
       }
       
@@ -115,11 +171,15 @@ export default function SignupPage() {
     }
   };
   
-  const handleSkipPasskey = () => {
+  const handleSkipPasskey = async () => {
     if (userSubOrgId) {
       localStorage.setItem("turnkey_user_sub_org_id", userSubOrgId);
       localStorage.setItem("turnkey_user_email", email);
+      
+      // Wallet was already created earlier, just redirect to dashboard
+      console.log("🎉 Signup complete (passkey skipped)! Redirecting to wallet dashboard...");
     }
+    
     router.push("/wallet");
   };
 
@@ -194,17 +254,43 @@ export default function SignupPage() {
                         <p className="text-sm text-green-800 dark:text-green-300">
                             <span className="font-semibold">Account Created! ✓</span>
                             <br />
-                            Next, secure it with a passkey for passwordless login.
+                            Your secure account is ready. Create a passkey to protect it and access your wallet.
                         </p>
                     </div>
 
-                    <Button onClick={handleCreatePasskey} disabled={loading} className="w-full" size="lg">
-                        <KeyRound className="mr-2" />
-                        {loading ? "Creating Passkey..." : "Create Passkey"}
-                    </Button>
-                    <Button onClick={handleSkipPasskey} variant="link" className="w-full">
-                        Skip for now
-                    </Button>
+                    <div className="space-y-3">
+                        {!isWebAuthnSupported && (
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3">
+                                <p className="text-sm text-red-800 dark:text-red-300">
+                                    <strong>WebAuthn Not Supported</strong><br />
+                                    Your browser doesn't support passkeys. Please try a modern browser like Chrome, Edge, or Firefox, or continue without a passkey.
+                                </p>
+                            </div>
+                        )}
+                        
+                        <Button 
+                            onClick={handleCreatePasskey} 
+                            disabled={loading || !isWebAuthnSupported} 
+                            className="w-full" 
+                            size="lg"
+                        >
+                            <KeyRound className="mr-2" />
+                            {loading ? "Creating Passkey..." : "Create Passkey"}
+                        </Button>
+                        
+                        <div className="text-sm text-muted-foreground">
+                            <span>Having trouble with passkeys? </span>
+                            <Button onClick={handleSkipPasskey} variant="link" className="h-auto p-0 text-sm font-normal underline">
+                                Continue without passkey
+                            </Button>
+                        </div>
+                        
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mt-4">
+                            <p className="text-xs text-amber-700 dark:text-amber-400">
+                                <strong>Note:</strong> Passkeys require a modern browser with WebAuthn support. If you're having issues, you can skip this step and set up a passkey later.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             )}
             
