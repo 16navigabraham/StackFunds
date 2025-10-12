@@ -7,8 +7,6 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { FirebaseClientProvider } from '@/firebase';
 import { TurnkeyProvider } from "@turnkey/sdk-react";
-import "@turnkey/sdk-react/styles.css";
-
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
