@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet } from 'lucide-react';
 import Link from 'next/link';
@@ -14,17 +15,26 @@ import {
 import { shortenAddress } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { useTurnkey } from "@turnkey/sdk-react";
-
 
 export function WalletConnect() {
-  const { user, logout } = useTurnkey();
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
   const router = useRouter();
 
+  useEffect(() => {
+    // Check for stored user data
+    const storedUser = localStorage.getItem('turnkey_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const handleLogout = async () => {
-    await logout();
+    // Clear stored data
+    localStorage.removeItem('turnkey_user');
+    localStorage.removeItem('turnkey_wallet');
+    setUser(null);
+    
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
@@ -38,7 +48,7 @@ export function WalletConnect() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
              <Wallet className="mr-2 h-4 w-4" />
-             {user.organization.organizationName ? shortenAddress(user.organization.organizationName, 6) : "Wallet"}
+             {user.username ? shortenAddress(user.username, 6) : "Wallet"}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>

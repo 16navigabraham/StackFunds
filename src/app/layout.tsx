@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
+import '@/app/globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/Header';
@@ -11,8 +11,13 @@ import { TurnkeyProvider } from "@turnkey/sdk-react";
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'StackFund: Bitcoin Crowdfunding',
-  description: 'Fund Ideas. Empower Innovation with Bitcoin.',
+  title: 'StackFund: Bitcoin powered payment link',
+  description: 'Empower Businesss Payment with Bitcoin network.',
+  icons: {
+    icon: '/stack.png',
+    shortcut: '/stack.png',
+    apple: '/stack.png',
+  },
 };
 
 export default function RootLayout({

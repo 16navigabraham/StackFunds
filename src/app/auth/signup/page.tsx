@@ -120,46 +120,10 @@ export default function SignupPage() {
         localStorage.setItem("turnkey_user_sub_org_id", userSubOrgId);
         localStorage.setItem("turnkey_user_email", email);
         
-        // NOW create wallet using the authenticated user's context
-        console.log("🔐 Creating embedded wallet for authenticated user...");
-        try {
-          // Use the authenticated iframe client to create wallet in user's sub-org
-          const walletResult = await authIframeClient?.createWallet({
-            walletName: "Default Stacks Wallet",
-            accounts: [
-              {
-                curve: "CURVE_SECP256K1",
-                pathFormat: "PATH_FORMAT_BIP32",
-                path: "m/44'/5757'/0'/0/0", // Stacks derivation path
-                addressFormat: "ADDRESS_FORMAT_BITCOIN_TESTNET_P2WPKH",
-              }
-            ]
-          });
-
-          if (walletResult?.walletId && walletResult?.addresses?.length > 0) {
-            const walletAddress = walletResult.addresses[0];
-            console.log("✅ Embedded wallet created successfully:", walletAddress);
-            console.log("✅ Wallet ID:", walletResult.walletId);
-            
-            // Store wallet info in localStorage for immediate access
-            localStorage.setItem("turnkey_wallet_address", walletAddress);
-            localStorage.setItem("turnkey_wallet_id", walletResult.walletId);
-            localStorage.setItem("walletInfo", JSON.stringify({
-              walletId: walletResult.walletId,
-              address: walletAddress,
-              organizationId: userSubOrgId
-            }));
-          } else {
-            console.warn("⚠️ Wallet creation returned unexpected result:", walletResult);
-          }
-          
-        } catch (walletError: any) {
-          console.warn("⚠️ Wallet creation had issues:", walletError.message);
-          // Don't fail the entire signup if wallet creation fails
-          // User can create wallet later from the dashboard
-        }
-        
+        console.log("✅ Passkey created successfully! Authentication complete.");
         console.log("🎉 Signup complete! Redirecting to wallet dashboard...");
+        
+        // Redirect to wallet page where user can create wallet in authenticated context
         router.push("/wallet");
       }
       

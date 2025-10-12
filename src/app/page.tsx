@@ -2,23 +2,32 @@
 
 import { WalletConnect } from "@/components/WalletConnect";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useTurnkey } from "@turnkey/sdk-react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isUserLoading } = useTurnkey();
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Only redirect if loading is complete and we have a user
-    if (!isUserLoading && user) {
+    // Check for stored user data
+    const storedUser = localStorage.getItem('turnkey_user');
+    const storedWallet = localStorage.getItem('turnkey_wallet');
+    
+    if (storedUser && storedWallet) {
+      setUser(JSON.parse(storedUser));
+      // Redirect to wallet if user is authenticated
       router.push("/wallet");
+    } else {
+      setUser(null);
     }
-  }, [user, isUserLoading, router]);
+    
+    setIsLoading(false);
+  }, [router]);
 
   // Don't render anything until we know the user's auth status.
   // This prevents a flicker of the homepage content for logged-in users.
-  if (isUserLoading || user) {
+  if (isLoading || user) {
     return (
        <div className="flex flex-col flex-1 items-center justify-center text-center p-4">
           <p>Loading...</p>
@@ -36,13 +45,29 @@ export default function Home() {
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
           Welcome to StackFund
         </h1>
-        <p className="mx-auto max-w-prose text-foreground/80 md:text-lg">
-          Welcome to StackFund — Your Gateway to Seamless Web3 Payments.
-          StackFund makes it effortless to receive crypto payments on Stacks Testnet.
-          With Turnkey’s embedded wallet SDK, every payment link creator gets an instant wallet — no setup required.
-          Simply create a payment link, share it, and receive funds directly to your wallet when payments are made.
-          No custodians. No delays. Just fast, secure, decentralized payments.
+        <p className="mx-auto max-w-prose text-foreground/80 md:text-lg leading-relaxed">
+          Your gateway to seamless Web3 payments on the Bitcoin network. 
+          StackFund empowers you to effortlessly create and manage payment links on Stacks Testnet, 
+          enabling instant crypto transactions with unparalleled ease.
         </p>
+        <p className="mx-auto max-w-prose text-foreground/70 text-base leading-relaxed">
+          Powered by Turnkey's cutting-edge embedded wallet technology, every user receives an instant, 
+          secure wallet upon signup — no complex setup required. Create your payment link in seconds, 
+          share it with anyone, and receive funds directly to your decentralized wallet.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2 items-center justify-center text-sm text-foreground/60">
+          <span className="flex items-center gap-1">
+            ✓ Non-custodial security
+          </span>
+          <span className="hidden sm:block">•</span>
+          <span className="flex items-center gap-1">
+            ✓ Instant transactions
+          </span>
+          <span className="hidden sm:block">•</span>
+          <span className="flex items-center gap-1">
+            ✓ Zero setup required
+          </span>
+        </div>
         <div className="flex justify-center">
           <WalletConnect />
         </div>

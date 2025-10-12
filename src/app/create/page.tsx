@@ -21,14 +21,16 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CheckCircle, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Turnkey } from "@turnkey/sdk-browser";
-import type { TWallet } from '@turnkey/sdk-browser';
 import { shortenAddress } from "@/lib/utils";
 
-const turnkey = new Turnkey({
-  apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
-  defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!,
-});
+// Commented out problematic Turnkey imports
+// import { Turnkey } from "@turnkey/sdk-browser";
+// import type { TWallet } from '@turnkey/sdk-browser';
+
+// const turnkey = new Turnkey({
+//   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
+//   defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!,
+// });
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters."),
@@ -44,18 +46,37 @@ export default function CreateCampaignPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [wallets, setWallets] = useState<TWallet[]>([]);
+  const [wallets, setWallets] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchUserAndWallets = async () => {
       try {
-        const session = await turnkey.getSession();
-        if (session) {
+        // Use localStorage instead of Turnkey SDK
+        const storedUser = localStorage.getItem('turnkey_user');
+        const storedWallet = localStorage.getItem('turnkey_wallet');
+        
+        if (storedUser && storedWallet) {
+          const userData = JSON.parse(storedUser);
+          const walletData = JSON.parse(storedWallet);
+          
+          console.log('Stored user data:', userData);
+          console.log('Stored wallet data:', walletData);
+          
           setUser({
-            organizationId: session.organizationId,
+            organizationId: userData.subOrgId || userData.organizationId,
           });
-          const walletData = await turnkey.getWallets();
-          setWallets(walletData.wallets);
+          
+          // Create mock wallet structure that matches the access pattern
+          const mockWallets = [{
+            walletId: walletData.walletId,
+            addresses: walletData.addresses || [{ address: 'No address available' }],
+            walletName: 'Default Wallet'
+          }];
+          
+          console.log('Mock wallets:', mockWallets);
+          setWallets(mockWallets);
+        } else {
+          console.log('No stored user or wallet data found');
         }
       } catch (e) {
         console.error("Error fetching user or wallets", e);
@@ -84,7 +105,10 @@ export default function CreateCampaignPage() {
     router.push('/wallet');
   }
 
-  const walletAddress = wallets[0]?.accounts[0]?.address ?? '';
+  // Fix the wallet address access to match the actual data structure
+  const walletAddress = wallets.length > 0 && wallets[0]?.addresses?.length > 0 
+    ? wallets[0].addresses[0].address 
+    : 'No wallet address available';
 
 
   return (
@@ -159,11 +183,11 @@ export default function CreateCampaignPage() {
                     />
                 </div>
                 
-                 {user && walletAddress && (
+                 {user && wallets.length > 0 && walletAddress !== 'No wallet address available' && (
                     <div className="space-y-2 rounded-lg border p-4">
                         <h4 className="text-sm font-medium">Creator Details</h4>
                          <p className="text-sm text-muted-foreground">
-                            <span className="font-semibold">Creator Name:</span> {shortenAddress(user.organizationId, 6)}
+                            <span className="font-semibold">Creator Name:</span> {shortenAddress(user.organizationId || 'Unknown', 6)}
                         </p>
                         <p className="text-sm text-muted-foreground">
                             <span className="font-semibold">Wallet Address:</span> {walletAddress}

@@ -26,8 +26,9 @@ export function Header() {
   
   const isAuthPage = pathname.startsWith("/auth");
   const isLandingPage = pathname === "/";
+  const isWalletPage = pathname.startsWith("/wallet");
   const showNav = mounted && !isAuthPage && !isLandingPage;
-  const showWalletConnect = mounted && !isAuthPage;
+  const showWalletConnect = mounted && !isAuthPage && !isWalletPage;
 
 
   return (
