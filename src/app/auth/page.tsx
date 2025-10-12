@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Auth } from "@turnkey/sdk-react";
