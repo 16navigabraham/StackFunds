@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useTurnkey } from "@turnkey/sdk-react";
@@ -43,7 +44,6 @@ export default function WalletDashboardPage() {
         });
       } catch (error) {
         console.error("Failed to load user details:", error);
-        // Optional: handle error state in UI
       } finally {
         setLoading(false);
       }
