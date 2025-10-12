@@ -72,7 +72,7 @@ export function WalletConnect() {
       const session = await passkeyClient.loginWithPasskey({
         sessionType: "SESSION_TYPE_READ_WRITE",
         publicKey,
-        expirationSeconds: 900,
+        expirationSeconds: "900",
       });
 
       if (session) {
@@ -116,7 +116,7 @@ export function WalletConnect() {
       const session = await passkeyClient.loginWithPasskey({
           sessionType: "SESSION_TYPE_READ_WRITE",
           publicKey,
-          expirationSeconds: 900,
+          expirationSeconds: "900",
       });
 
       if (session) {

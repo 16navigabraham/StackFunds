@@ -6,9 +6,17 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { FirebaseClientProvider } from '@/firebase';
+import {
+  TurnkeyProvider,
+  TurnkeyProviderConfig,
+} from "@turnkey/react-wallet-kit";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
+const turnkeyConfig: TurnkeyProviderConfig = {
+  organizationId:"env 9346084e-abdf-4ff1-98c7-084c40cbba7c!",
+  authProxyConfigId:"env ac7f0624-a25a-4f56-9748-b98cdbe3fdb8!",
+};
 export const metadata: Metadata = {
   title: 'StackFund: Bitcoin Crowdfunding',
   description: 'Fund Ideas. Empower Innovation with Bitcoin.',
