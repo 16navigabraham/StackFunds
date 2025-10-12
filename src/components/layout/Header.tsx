@@ -18,13 +18,15 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const isAuthPage = pathname.startsWith("/auth");
+  const showNav = !isHomePage && !isAuthPage;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
         <div className="flex items-center gap-6">
           <Logo />
-          {!isHomePage && (
+          {showNav && (
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
               {navLinks.map(({ href, label }) => (
                 <Link
@@ -43,11 +45,11 @@ export function Header() {
         </div>
 
         <div className="hidden md:block">
-            {!isHomePage && <WalletConnect />}
+            {showNav && <WalletConnect />}
         </div>
 
         <div className="md:hidden">
-            {!isHomePage && (
+            {showNav && (
                  <Sheet>
                     <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
