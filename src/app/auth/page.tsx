@@ -13,9 +13,9 @@ export default function AuthPage() {
     router.push("/wallet");
   };
 
-  const handleError = (error: Error) => {
-    console.error("Auth error:", error);
-    setErrorMessage(error.message);
+  const handleError = (message: string) => {
+    console.error("Auth error:", message);
+    setErrorMessage(message);
   };
 
   return (
@@ -35,15 +35,11 @@ export default function AuthPage() {
         )}
 
         <Auth
-          config={{
-            email: {
-              enabled: true,
-            },
-            passkey: {
-              enabled: true,
-            },
+          authConfig={{
+            emailEnabled: true,
+            passkeyEnabled: true,
           }}
-          onSuccess={handleAuthSuccess}
+          onAuthSuccess={handleAuthSuccess}
           onError={handleError}
         />
       </div>
