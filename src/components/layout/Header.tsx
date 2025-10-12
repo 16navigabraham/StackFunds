@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,14 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const isHomePage = pathname === "/";
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   const isAuthPage = pathname.startsWith("/auth");
-  const showNav = !isHomePage && !isAuthPage;
+  const showNav = mounted && !isAuthPage;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -44,46 +50,48 @@ export function Header() {
           )}
         </div>
 
-        <div className="hidden md:block">
-            {showNav && <WalletConnect />}
-        </div>
+        {showNav && (
+          <>
+            <div className="hidden md:block">
+              <WalletConnect />
+            </div>
 
-        <div className="md:hidden">
-            {showNav && (
-                 <Sheet>
-                    <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu className="h-5 w-5" />
-                        <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right">
-                    <div className="flex flex-col gap-6 p-6">
-                        <Logo />
-                        <nav className="flex flex-col gap-4">
-                        {navLinks.map(({ href, label }) => (
-                            <Link
-                            key={href}
-                            href={href}
-                            className={cn(
-                                "font-medium transition-colors hover:text-foreground/80",
-                                pathname.startsWith(href)
-                                ? "text-foreground"
-                                : "text-foreground/60"
-                            )}
-                            >
-                            {label}
-                            </Link>
-                        ))}
-                        </nav>
-                        <div className="mt-auto">
-                            <WalletConnect />
-                        </div>
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                  <div className="flex flex-col gap-6 p-6">
+                    <Logo />
+                    <nav className="flex flex-col gap-4">
+                      {navLinks.map(({ href, label }) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          className={cn(
+                            "font-medium transition-colors hover:text-foreground/80",
+                            pathname.startsWith(href)
+                              ? "text-foreground"
+                              : "text-foreground/60"
+                          )}
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                    </nav>
+                    <div className="mt-auto">
+                      <WalletConnect />
                     </div>
-                    </SheetContent>
-                </Sheet>
-            )}
-        </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );
