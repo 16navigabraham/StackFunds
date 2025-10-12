@@ -21,13 +21,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("Creating sub-organization for:", email);
+    console.log("📝 Creating sub-organization for:", email);
 
     // Get the API client
     const apiClient = turnkey.apiClient();
 
-    // Create sub-organization with embedded wallet
-    const response = await apiClient.createSubOrganization({
+    // Create sub-organization first, without wallet details
+    const createSubOrgResponse = await apiClient.createSubOrganization({
       subOrganizationName: username || email.split("@")[0],
       rootUsers: [
         {
@@ -38,33 +38,53 @@ export async function POST(req: NextRequest) {
         },
       ],
       rootQuorumThreshold: 1,
-      wallet: {
-        walletName: "Default Wallet",
-        accounts: [
-          {
-            curve: "CURVE_SECP256K1",
-            pathFormat: "PATH_FORMAT_BIP32",
-            path: "m/44'/5757'/0'/0/0", // Stacks path
-            addressFormat: "ADDRESS_FORMAT_STACKS",
-          },
-        ],
-      },
     });
 
-    console.log("✅ Sub-org created:", response.subOrganizationId);
+    const subOrgId = createSubOrgResponse.subOrganizationId;
+    console.log("✅ Sub-org created:", subOrgId);
+
+    // Now, create a wallet (private key) for this new sub-organization
+    const createKeyResponse = await apiClient.createPrivateKeys({
+        organizationId: subOrgId,
+        privateKeys: [
+            {
+                privateKeyName: "Default Stacks Key",
+                curve: "CURVE_SECP256K1",
+                addressFormats: ["ADDRESS_FORMAT_STACKS"], 
+                privateKeyTags: [],
+            }
+        ]
+    });
+
+    const walletAddress = createKeyResponse.privateKeys[0]?.addresses?.[0]?.address;
+    console.log("✅ Wallet created with address:", walletAddress);
 
     return NextResponse.json({
       success: true,
-      subOrgId: response.subOrganizationId,
-      walletAddress: response.addresses?.[0],
+      subOrgId: subOrgId,
+      walletAddress: walletAddress,
     });
   } catch (error: any) {
     console.error("❌ Failed to create sub-org:", error);
     
+    let errorMessage = error.message || "Failed to create user account";
+    let errorDetails = null;
+
+    if (error.details && Array.isArray(error.details)) {
+      errorDetails = error.details.map((detail: any) => {
+        if (detail.fieldViolations) {
+          return detail.fieldViolations.map((v: any) => 
+            `${v.field}: ${v.description}`
+          ).join(", ");
+        }
+        return JSON.stringify(detail);
+      }).join("; ");
+    }
+
     return NextResponse.json(
       {
-        error: error.message || "Failed to create user account",
-        details: error.details || error.toString(),
+        error: errorMessage,
+        details: errorDetails || error.toString(),
       },
       { status: 500 }
     );
