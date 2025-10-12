@@ -113,6 +113,14 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+  
+  const handleSkipPasskey = () => {
+    if (userSubOrgId) {
+      localStorage.setItem("turnkey_user_sub_org_id", userSubOrgId);
+      localStorage.setItem("turnkey_user_email", email);
+    }
+    router.push("/wallet");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -193,7 +201,7 @@ export default function SignupPage() {
                         <KeyRound className="mr-2" />
                         {loading ? "Creating Passkey..." : "Create Passkey"}
                     </Button>
-                    <Button onClick={() => router.push('/wallet')} variant="link" className="w-full">
+                    <Button onClick={handleSkipPasskey} variant="link" className="w-full">
                         Skip for now
                     </Button>
                 </div>

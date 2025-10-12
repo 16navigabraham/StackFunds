@@ -1,8 +1,8 @@
-import { TurnkeyServerClient } from "@turnkey/sdk-server";
+import { Turnkey } from "@turnkey/sdk-server";
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 
-const turnkeyServer = new TurnkeyServerClient({
+// Initialize Turnkey with correct class name
+const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
   apiPrivateKey: process.env.TURNKEY_API_PRIVATE_KEY!,
   apiPublicKey: process.env.TURNKEY_API_PUBLIC_KEY!,
@@ -20,18 +20,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate unique user ID
-    const userId = `user_${randomBytes(16).toString("hex")}`;
+    console.log("Creating sub-organization for:", email);
 
-    // Create sub-organization for this user
-    const createSubOrgResponse = await turnkeyServer.apiClient().createSubOrganization({
+    // Get the API client
+    const apiClient = turnkey.apiClient();
+
+    // Create sub-organization with embedded wallet
+    const response = await apiClient.createSubOrganization({
       subOrganizationName: username || email.split("@")[0],
       rootUsers: [
         {
           userName: email,
           userEmail: email,
-          apiKeys: [], // Will use passkey instead
-          authenticators: [], // Passkey will be added in next step
+          apiKeys: [],
+          authenticators: [],
         },
       ],
       rootQuorumThreshold: 1,
@@ -48,20 +50,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const subOrgId = createSubOrgResponse.subOrganizationId;
+    console.log("✅ Sub-org created:", response.subOrganizationId);
 
     return NextResponse.json({
       success: true,
-      subOrgId,
-      userId,
-      walletAddress: createSubOrgResponse.addresses?.[0],
+      subOrgId: response.subOrganizationId,
+      walletAddress: response.addresses?.[0],
     });
   } catch (error: any) {
-    console.error("Failed to create user sub-org:", error);
+    console.error("❌ Failed to create sub-org:", error);
+    
     return NextResponse.json(
-      { 
+      {
         error: error.message || "Failed to create user account",
-        details: error.details 
+        details: error.details || error.toString(),
       },
       { status: 500 }
     );
