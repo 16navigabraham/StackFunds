@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { CheckCircle, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Turnkey } from "@turnkey/sdk-browser";
+import type { TWallet } from '@turnkey/sdk-browser';
+import { shortenAddress } from "@/lib/utils";
 
 const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
@@ -41,18 +43,24 @@ export default function CreateCampaignPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [wallets, setWallets] = useState<TWallet[]>([]);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const session = await turnkey.getSession();
-      if (session) {
-        setUser({
-          organizationId: session.organizationId,
-          wallets: [{ address: 'ST...placeholder'}]
-        });
+    const fetchUserAndWallets = async () => {
+      try {
+        const session = await turnkey.getSession();
+        if (session) {
+          setUser({
+            organizationId: session.organizationId,
+          });
+          const walletData = await turnkey.getWallets();
+          setWallets(walletData.wallets);
+        }
+      } catch (e) {
+        console.error("Error fetching user or wallets", e);
       }
     };
-    fetchUser();
+    fetchUserAndWallets();
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -74,6 +82,9 @@ export default function CreateCampaignPage() {
     setIsSuccessModalOpen(false);
     router.push('/wallet');
   }
+
+  const walletAddress = wallets[0]?.accounts[0]?.address ?? '';
+
 
   return (
     <>
@@ -147,14 +158,14 @@ export default function CreateCampaignPage() {
                     />
                 </div>
                 
-                 {user && user.wallets[0] && (
+                 {user && walletAddress && (
                     <div className="space-y-2 rounded-lg border p-4">
                         <h4 className="text-sm font-medium">Creator Details</h4>
                          <p className="text-sm text-muted-foreground">
-                            <span className="font-semibold">Creator Name:</span> {user.organizationId}
+                            <span className="font-semibold">Creator Name:</span> {shortenAddress(user.organizationId, 6)}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                            <span className="font-semibold">Wallet Address:</span> {user.wallets[0].address}
+                            <span className="font-semibold">Wallet Address:</span> {walletAddress}
                         </p>
                         <p className="text-xs text-muted-foreground pt-2">
                             These details are automatically filled from your connected wallet.

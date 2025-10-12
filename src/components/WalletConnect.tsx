@@ -23,6 +23,7 @@ import { shortenAddress } from "@/lib/utils";
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { AddressFormat } from "@turnkey/core";
 
 const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
@@ -65,15 +66,8 @@ export function WalletConnect() {
     setIsAuthModalOpen(false);
     try {
       const passkeyClient = turnkey.passkeyClient();
-      const indexedDbClient = await turnkey.indexedDbClient();
-      await indexedDbClient.init();
-      const publicKey = await indexedDbClient.getPublicKey();
       
-      const session = await passkeyClient.loginWithPasskey({
-        sessionType: "SESSION_TYPE_READ_WRITE",
-        publicKey,
-        expirationSeconds: "900",
-      });
+      const session = await passkeyClient.loginWithPasskey();
 
       if (session) {
         toast({
@@ -99,30 +93,20 @@ export function WalletConnect() {
     setIsAuthModalOpen(false);
     try {
       const passkeyClient = turnkey.passkeyClient();
-      const indexedDbClient = await turnkey.indexedDbClient();
-      await indexedDbClient.init();
-      const publicKey = await indexedDbClient.getPublicKey();
-
-      const passkey = await passkeyClient.createUserPasskey({
-         publicKey: {
-           rp: { name: "StackFund" },
-           user: { 
-             name: `user-${Date.now()}`,
-             displayName: `User ${Date.now()}`
-           },
-         },
-       });
-
-      const session = await passkeyClient.loginWithPasskey({
-          sessionType: "SESSION_TYPE_READ_WRITE",
-          publicKey,
-          expirationSeconds: "900",
-      });
+       const session = await passkeyClient.signUpWithPasskey();
 
       if (session) {
+          await turnkey.createWallet({
+            accounts: [{
+              pathTemplate: "m/44'/5757'/0'/0/0",
+              addressFormat: AddressFormat.STACKS,
+            }],
+            walletName: "My Stacks Wallet"
+          });
+
           toast({
               title: "Signup Successful",
-              description: "Welcome to StackFund!",
+              description: "Welcome to StackFund! Your wallet has been created.",
           });
           onAuthSuccess();
       }
@@ -151,7 +135,7 @@ export function WalletConnect() {
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
              <Wallet className="mr-2 h-4 w-4" />
-             {user.organizationId ? shortenAddress(user.organizationId) : "Wallet"}
+             {user.organizationId ? shortenAddress(user.organizationId, 6) : "Wallet"}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>

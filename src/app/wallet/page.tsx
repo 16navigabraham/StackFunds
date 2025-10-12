@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
 import { Turnkey } from '@turnkey/sdk-browser';
+import type { TWallet } from '@turnkey/sdk-browser';
 
 const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
@@ -23,26 +24,31 @@ const turnkey = new Turnkey({
 
 export default function WalletDashboardPage() {
   const [user, setUser] = useState<any>(null);
+  const [wallets, setWallets] = useState<TWallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndWallets = async () => {
       setIsLoading(true);
-      const session = await turnkey.getSession();
-      if (session) {
-        // In a real app, you'd fetch wallet details from Turnkey API
-        // For now, we'll simulate it.
-        setUser({
-          organizationId: session.organizationId,
-          wallets: [{ address: 'ST...placeholder'}]
-        });
+      try {
+        const session = await turnkey.getSession();
+        if (session) {
+          setUser({
+            organizationId: session.organizationId,
+          });
+          const walletData = await turnkey.getWallets();
+          setWallets(walletData.wallets);
+        }
+      } catch (e) {
+        console.error("Error fetching user or wallets", e);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
-    fetchUser();
+    fetchUserAndWallets();
   }, []);
 
-  const walletAddress = user?.wallets?.[0]?.address ?? '';
+  const walletAddress = wallets[0]?.accounts[0]?.address ?? '';
   const username = user?.organizationId ?? '';
   // TODO: Fetch real balance from Stacks API
   const balance = 0.00;
@@ -58,7 +64,7 @@ export default function WalletDashboardPage() {
               {isLoading ? (
                 <Skeleton className="h-5 w-40 mt-1" />
               ) : (
-                <CardDescription>Welcome, {username}</CardDescription>
+                <CardDescription>Welcome, {shortenAddress(username, 6)}</CardDescription>
               )}
             </CardHeader>
             <CardContent className="space-y-4">
