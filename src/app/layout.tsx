@@ -31,7 +31,7 @@ export default function RootLayout({
         <TurnkeyProvider
           config={{
             apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
-            defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+            defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!,
             serverSignUrl: "/api/turnkey/sign",
           }}
         >
