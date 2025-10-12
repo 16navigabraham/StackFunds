@@ -23,7 +23,6 @@ import { shortenAddress } from "@/lib/utils";
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { AddressFormat } from "@turnkey/core";
 
 const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
@@ -99,7 +98,7 @@ export function WalletConnect() {
           await turnkey.createWallet({
             accounts: [{
               pathTemplate: "m/44'/5757'/0'/0/0",
-              addressFormat: AddressFormat.STACKS,
+              addressFormat: turnkey.AddressFormat.STACKS,
             }],
             walletName: "My Stacks Wallet"
           });
