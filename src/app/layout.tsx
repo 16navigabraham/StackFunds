@@ -32,6 +32,7 @@ export default function RootLayout({
           config={{
             apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
             defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+            serverSignUrl: "/api/turnkey/sign",
           }}
         >
           <FirebaseClientProvider>

@@ -16,6 +16,16 @@ export default function Home() {
     }
   }, [user, isUserLoading, router]);
 
+  // Don't render anything until we know the user's auth status.
+  // This prevents a flicker of the homepage content for logged-in users.
+  if (isUserLoading || user) {
+    return (
+       <div className="flex flex-col flex-1 items-center justify-center text-center p-4">
+          <p>Loading...</p>
+       </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 items-center justify-center text-center p-4">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent -z-10"></div>
