@@ -42,16 +42,6 @@ export default function AuthPage() {
             passkey: {
               enabled: true,
             },
-            oauth: {
-              google: {
-                enabled: true,
-                // You must configure your Google OAuth client ID in the Turnkey dashboard
-              },
-              apple: {
-                enabled: true,
-                // You must configure your Apple OAuth settings in the Turnkey dashboard
-              }
-            }
           }}
           onSuccess={handleAuthSuccess}
           onError={handleError}

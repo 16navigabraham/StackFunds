@@ -12,15 +12,14 @@ import { Terminal } from "lucide-react";
 
 
 export default function MessageSigner() {
-  const { signRawPayload, getWallets, getSession } = useTurnkey();
+  const { signRawPayload, getWallets, user } = useTurnkey();
   const [message, setMessage] = useState("");
   const [signature, setSignature] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const getSignWith = async () => {
-    const session = await getSession();
-    if (!session) throw new Error("No active session");
+    if (!user) throw new Error("No active session");
 
     const wallets = await getWallets();
     if (!wallets || wallets.wallets.length === 0) {

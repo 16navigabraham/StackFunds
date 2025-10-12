@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MessageSigner from "@/components/MessageSigner";
 import WalletManagement from "@/components/WalletManagement";
-import { shortenAddress } from "@/lib/utils";
+import type { TWallet } from "@turnkey/sdk-browser";
+
 
 interface UserSession {
   userId: string;
@@ -15,47 +16,48 @@ interface UserSession {
 }
 
 export default function WalletDashboardPage() {
-  const { getSession, logout, getWallets } = useTurnkey();
+  const { user, isUserLoading, logout, getWallets } = useTurnkey();
   const router = useRouter();
-  const [user, setUser] = useState<UserSession | null>(null);
+  const [userInfo, setUserInfo] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUserSession();
-  }, []);
-
-  const loadUserSession = async () => {
-    try {
-      const session = await getSession();
-      
-      if (!session || !session.isLoggedIn) {
-        router.push("/auth");
-        return;
-      }
-
-      const wallets = await getWallets();
-      const primaryWallet = wallets?.wallets?.[0];
-
-      setUser({
-        userId: session.user.id,
-        organizationId: session.organizationId,
-        walletAddress: primaryWallet?.accounts[0]?.address,
-        email: session.user.email,
-      });
-    } catch (error) {
-      console.error("Failed to load session:", error);
-      router.push("/auth");
-    } finally {
-      setLoading(false);
+    if (isUserLoading) {
+      return; 
     }
-  };
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+
+    const loadUserDetails = async () => {
+      try {
+        const wallets = await getWallets();
+        const primaryWallet = wallets?.wallets?.[0];
+
+        setUserInfo({
+          userId: user.id,
+          organizationId: user.organization.id,
+          walletAddress: primaryWallet?.accounts[0]?.address,
+          email: user.email,
+        });
+      } catch (error) {
+        console.error("Failed to load user details:", error);
+        // Optional: handle error state in UI
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadUserDetails();
+  }, [user, isUserLoading, router, getWallets]);
 
   const handleLogout = async () => {
     await logout();
     router.push("/");
   };
 
-  if (loading) {
+  if (loading || isUserLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-lg">Loading your dashboard...</div>
@@ -88,7 +90,7 @@ export default function WalletDashboardPage() {
                 User ID
               </label>
               <p className="mt-1 text-sm font-mono break-all">
-                {user?.userId}
+                {userInfo?.userId}
               </p>
             </div>
 
@@ -97,26 +99,26 @@ export default function WalletDashboardPage() {
                 Organization ID
               </label>
               <p className="mt-1 text-sm font-mono break-all">
-                {user?.organizationId}
+                {userInfo?.organizationId}
               </p>
             </div>
 
-            {user?.email && (
+            {userInfo?.email && (
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
                   Email
                 </label>
-                <p className="mt-1 text-sm">{user.email}</p>
+                <p className="mt-1 text-sm">{userInfo.email}</p>
               </div>
             )}
 
-            {user?.walletAddress && (
+            {userInfo?.walletAddress && (
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
                   Primary Wallet
                 </label>
                 <p className="mt-1 text-sm font-mono break-all">
-                  {user.walletAddress}
+                  {userInfo.walletAddress}
                 </p>
               </div>
             )}

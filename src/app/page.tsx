@@ -7,17 +7,14 @@ import { useTurnkey } from "@turnkey/sdk-react";
 
 export default function Home() {
   const router = useRouter();
-  const { getSession } = useTurnkey();
+  const { user, isUserLoading } = useTurnkey();
   
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      const session = await getSession();
-      if (session && session.isLoggedIn) {
-        router.push("/wallet");
-      }
-    };
-    checkLoginStatus();
-  }, [getSession, router]);
+    // Only redirect if loading is complete and we have a user
+    if (!isUserLoading && user) {
+      router.push("/wallet");
+    }
+  }, [user, isUserLoading, router]);
 
   return (
     <div className="flex flex-col flex-1 items-center justify-center text-center p-4">
