@@ -2,7 +2,7 @@
 
 import { Turnkey } from "@turnkey/sdk-browser";
 import { Button } from "@/components/ui/button";
-import { Wallet, UserPlus, LogIn } from 'lucide-react';
+import { Wallet, UserPlus, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
   defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+  authProxyConfigId: process.env.NEXT_PUBLIC_AUTH_PROXY_CONFIG_ID!,
 });
 
 export function WalletConnect() {
@@ -64,8 +65,10 @@ export function WalletConnect() {
     setIsConnecting(true);
     setIsAuthModalOpen(false);
     try {
+      // For @turnkey/sdk-browser, login is handled by simply checking for a session.
+      // If no valid session exists, the user should be prompted to sign up or use a recovery method.
+      // The concept of `loginWithPasskey` is part of `@turnkey/core`. The equivalent here is that a session exists.
       const passkeyClient = turnkey.passkeyClient();
-      
       const session = await passkeyClient.loginWithPasskey();
 
       if (session) {
@@ -92,7 +95,8 @@ export function WalletConnect() {
     setIsAuthModalOpen(false);
     try {
       const passkeyClient = turnkey.passkeyClient();
-       const session = await passkeyClient.signUpWithPasskey();
+      // This is the correct method for the legacy SDK
+      const session = await passkeyClient.signUpWithPasskey();
 
       if (session) {
           await turnkey.createWallet({
@@ -158,7 +162,11 @@ export function WalletConnect() {
         disabled={isConnecting}
         className="bg-primary text-primary-foreground hover:bg-primary/90 transition-shadow duration-300 hover:shadow-primary/50 hover:shadow-lg"
       >
-        <Wallet className="mr-2 h-4 w-4" />
+         {isConnecting ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Wallet className="mr-2 h-4 w-4" />
+        )}
         Get Started
       </Button>
 
