@@ -72,14 +72,29 @@ export default function AuthPage() {
     setError("");
 
     try {
-        const result = await passkeyClient?.createUserPasskey();
+        const result = await passkeyClient?.createUserPasskey({
+             publicKey: {
+                rp: {
+                    id: window.location.hostname,
+                    name: "StackFund",
+                },
+                user: {
+                    // Use the email as the user's name and displayName.
+                    // This is used by the browser to display account options.
+                    // The user's ID is managed by Turnkey.
+                    name: email,
+                    displayName: email,
+                },
+                // All other publicKey options are defaults
+            },
+        });
         if (result) {
           console.log("Passkey created successfully");
            // After successful creation, the user is logged in.
           router.push("/wallet");
         }
     } catch (signupErr: any) {
-        setError(signupErr.message || "Failed to create passkey. You may already have one.");
+        setError(signupErr.message || "Failed to create passkey. You may already have one, or your browser may not support them.");
         console.error("Passkey creation error:", signupErr);
     } finally {
       setLoading(false);
