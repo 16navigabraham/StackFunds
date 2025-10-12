@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +27,7 @@ import { shortenAddress } from "@/lib/utils";
 
 const turnkey = new Turnkey({
   apiBaseUrl: process.env.NEXT_PUBLIC_TURNKEY_API_BASE_URL!,
-  defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+  defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!,
 });
 
 const formSchema = z.object({
