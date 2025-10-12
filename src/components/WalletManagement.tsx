@@ -5,6 +5,12 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import type { TWallet } from "@turnkey/sdk-browser";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function WalletManagement() {
   const { getWallets, createWallet, exportWallet } = useTurnkey();
@@ -77,6 +83,8 @@ export default function WalletManagement() {
     }
   };
 
+  const hasWallet = wallets.length > 0;
+
   return (
     <Card>
       <CardHeader>
@@ -90,19 +98,32 @@ export default function WalletManagement() {
             >
                 {loading ? "Loading..." : "Refresh"}
             </Button>
-            <Button
-                onClick={createNewWallet}
-                disabled={loading}
-            >
-                Create New
-            </Button>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span tabIndex={0}>
+                            <Button
+                                onClick={createNewWallet}
+                                disabled={loading || hasWallet}
+                            >
+                                Create New
+                            </Button>
+                        </span>
+                    </TooltipTrigger>
+                    {hasWallet && (
+                        <TooltipContent>
+                            <p>Only one wallet is allowed per user.</p>
+                        </TooltipContent>
+                    )}
+                </Tooltip>
+            </TooltipProvider>
             </div>
         </div>
       </CardHeader>
       <CardContent>
         {wallets.length === 0 ? (
           <p className="text-muted-foreground text-center py-4">
-            No wallets found. Click "Refresh" to load wallets.
+            No wallets found. Click "Refresh" to load wallets or "Create New" to create one.
           </p>
         ) : (
           <div className="space-y-4">
