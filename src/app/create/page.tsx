@@ -19,9 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { CheckCircle, QrCode } from "lucide-react";
+import { CheckCircle, QrCode, Copy, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { shortenAddress } from "@/lib/utils";
+import CopyButton from "@/components/CopyButton";
 
 // Commented out problematic Turnkey imports
 // import { Turnkey } from "@turnkey/sdk-browser";
@@ -44,6 +45,9 @@ const formSchema = z.object({
 
 export default function CreateCampaignPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isCreatingLink, setIsCreatingLink] = useState(false);
+  const [paymentLinkId, setPaymentLinkId] = useState<string>('');
+  const [paymentLinkUrl, setPaymentLinkUrl] = useState<string>('');
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [wallets, setWallets] = useState<any[]>([]);
@@ -95,9 +99,55 @@ export default function CreateCampaignPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    setIsSuccessModalOpen(true);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user || wallets.length === 0) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    setIsCreatingLink(true);
+
+    try {
+      const paymentLinkData = {
+        title: values.title,
+        description: values.shortDescription,
+        amount: values.goal,
+        duration: values.duration,
+        paymentToken: 'sBTC',
+        creatorAddress: walletAddress,
+        creatorId: user.organizationId,
+        expiresAt: new Date(Date.now() + values.duration * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+        status: 'active'
+      };
+
+      const response = await fetch('/api/payment-links', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentLinkData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment link');
+      }
+
+      const result = await response.json();
+      const linkId = result.paymentLinkId;
+      const fullUrl = `${window.location.origin}/pay/${linkId}`;
+      
+      setPaymentLinkId(linkId);
+      setPaymentLinkUrl(fullUrl);
+      setIsSuccessModalOpen(true);
+      
+      console.log('Payment link created:', result);
+    } catch (error) {
+      console.error('Error creating payment link:', error);
+      alert('Failed to create payment link. Please try again.');
+    } finally {
+      setIsCreatingLink(false);
+    }
   }
 
   const handleModalClose = () => {
@@ -199,9 +249,15 @@ export default function CreateCampaignPage() {
                 )}
 
 
-                <Button type="submit" size="lg" className="w-full">
-                  Create Payment Link
+                <Button type="submit" size="lg" className="w-full" disabled={isCreatingLink || !user || wallets.length === 0}>
+                  {isCreatingLink ? 'Creating Link...' : 'Create Payment Link'}
                 </Button>
+                
+                {(!user || wallets.length === 0) && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Please connect your wallet to create payment links
+                  </p>
+                )}
               </form>
             </Form>
           </CardContent>
@@ -209,25 +265,66 @@ export default function CreateCampaignPage() {
       </div>
 
        <Dialog open={isSuccessModalOpen} onOpenChange={handleModalClose}>
-        <DialogContent className="sm:max-w-md text-center">
+        <DialogContent className="sm:max-w-lg text-center">
           <DialogHeader className="items-center">
-            <div className="rounded-full bg-accent/10 p-3">
-              <CheckCircle className="h-10 w-10 text-accent" />
+            <div className="rounded-full bg-green-100 dark:bg-green-900 p-3">
+              <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
             </div>
             <DialogTitle className="text-2xl font-bold">Payment Link Created!</DialogTitle>
             <DialogDescription>
-              Your link is now live. Start sharing it to get paid.
+              Your sBTC payment link is now live and ready to share.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center justify-center space-y-4 p-4 bg-muted/50 rounded-lg">
-            <QrCode className="h-24 w-24" />
-            <p className="text-sm font-mono break-all text-muted-foreground">
-                stack.fund/pay/new-payment-id
-            </p>
+          
+          <div className="space-y-4">
+            {/* Payment Link Details */}
+            <div className="p-4 bg-muted/50 rounded-lg text-left">
+              <h4 className="font-medium mb-2">Link Details:</h4>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p><span className="font-medium">Amount:</span> {form.getValues('goal')} sBTC</p>
+                <p><span className="font-medium">Token:</span> sBTC (Synthetic Bitcoin)</p>
+                <p><span className="font-medium">Expires:</span> {form.getValues('duration')} days</p>
+                <p><span className="font-medium">Link ID:</span> {paymentLinkId}</p>
+              </div>
+            </div>
+
+            {/* Shareable URL */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Payment Link:</label>
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <code className="flex-1 text-xs font-mono text-left break-all">
+                  {paymentLinkUrl}
+                </code>
+                <CopyButton 
+                  textToCopy={paymentLinkUrl}
+                  className="flex-shrink-0"
+                />
+              </div>
+            </div>
+
+            {/* QR Code Placeholder */}
+            <div className="flex flex-col items-center justify-center space-y-2 p-4 bg-muted/30 rounded-lg">
+              <QrCode className="h-20 w-20 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">QR Code for easy sharing</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  window.open(paymentLinkUrl, '_blank');
+                }}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Preview Link
+              </Button>
+              <Button onClick={handleModalClose} className="flex-1">
+                Back to Wallet
+              </Button>
+            </div>
           </div>
-          <Button onClick={handleModalClose} className="w-full">
-            View My Wallet
-          </Button>
         </DialogContent>
       </Dialog>
     </>
