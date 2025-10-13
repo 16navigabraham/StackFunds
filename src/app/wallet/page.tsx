@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTurnkey } from '@turnkey/sdk-react';
 import WalletManagement from '@/components/WalletManagement';
@@ -84,6 +85,10 @@ export default function WalletPage() {
           }
           
           await loadPriceData();
+        } else {
+          // No user session found, redirect to auth
+          router.push('/auth');
+          return;
         }
       } catch (e) {
         console.error("Error initializing wallet", e);

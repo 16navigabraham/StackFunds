@@ -1,6 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect  const checkAuthenticationStatus = async () => {
+    // Simply check if we have the required user session data
+    const storedSubOrgId = localStorage.getItem("turnkey_user_sub_org_id");
+    const storedEmail = localStorage.getItem("turnkey_user_email");
+    
+    if (storedSubOrgId && storedEmail) {
+      console.log("✅ User session found:", storedEmail);
+      setAuthReady(true);
+    } else {
+      console.log("❌ No user session found");
+      setAuthReady(false);
+    }
+  };
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
@@ -63,29 +75,12 @@ export default function WalletManagement() {
   const reAuthenticate = async () => {
     setIsAuthenticating(true);
     try {
-      const subOrgId = localStorage.getItem("turnkey_user_sub_org_id");
-      if (!subOrgId) {
-        alert("No user session found. Please sign up or log in again.");
-        window.location.href = "/auth/login";
-        return;
-      }
-
-      console.log("🔐 Re-authenticating user for sub-organization:", subOrgId);
-      
-      if (!authIframeClient) {
-        throw new Error("Authentication client not available");
-      }
-
-      // Test authentication by trying to access the client
-      console.log("✅ Re-authentication completed");
-      setAuthReady(true);
-      alert("Authentication successful! You can now create your wallet.");
-
+      // Simply redirect to login page for proper authentication
+      alert("Please complete the login process to create a wallet.");
+      window.location.href = "/auth/login";
     } catch (error: any) {
       console.error("❌ Re-authentication failed:", error);
-      alert("Authentication failed: " + error.message + ". Please try logging in again.");
-      // Redirect to login page
-      window.location.href = "/auth/login";
+      setAuthReady(false);
     } finally {
       setIsAuthenticating(false);
     }
@@ -127,93 +122,62 @@ export default function WalletManagement() {
   };
 
   const createWallet = async () => {
-    // First check if we're authenticated
-    if (!authReady) {
-      if (confirm("Authentication is required to create a wallet. Would you like to authenticate now?")) {
-        await reAuthenticate();
-        // Don't proceed with wallet creation immediately, let user click again after auth
-        return;
-      } else {
-        return;
-      }
-    }
-
     setLoading(true);
     try {
-      const subOrgId = localStorage.getItem("turnkey_user_sub_org_id");
-      if (!subOrgId) {
-        alert("No sub-organization found. Please sign up again to create your wallet.");
+      // Check if user is properly authenticated first
+      const storedSubOrgId = localStorage.getItem("turnkey_user_sub_org_id");
+      if (!storedSubOrgId) {
+        alert("No user session found. Please sign up or log in again.");
         window.location.href = "/auth/signup";
         return;
       }
 
-      if (!authIframeClient) {
-        alert("Authentication client not available. Please try re-authenticating.");
-        return;
-      }
+      console.log("🔐 Creating wallet for sub-org:", storedSubOrgId);
 
-      console.log("🔐 Creating wallet using authenticated client...");
-
-      // Use the Turnkey SDK to create wallet
-      const walletResult = await authIframeClient.createWallet({
-        walletName: "Default Stacks Wallet",
-        accounts: [
-          {
-            curve: "CURVE_SECP256K1",
-            pathFormat: "PATH_FORMAT_BIP32",
-            path: "m/44'/5757'/0'/0/0",
-            addressFormat: "ADDRESS_FORMAT_COMPRESSED",
-          }
-        ]
+      // Instead of using iframe client directly, use the API endpoint
+      // which properly handles wallet creation with the Turnkey server SDK
+      const response = await fetch('/api/turnkey/create-wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subOrgId: storedSubOrgId,
+          walletName: 'Default Stacks Wallet',
+        }),
       });
 
-      if (walletResult && walletResult.walletId) {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create wallet');
+      }
+
+      const walletResult = await response.json();
+
+      if (walletResult && walletResult.success) {
         const walletId = walletResult.walletId;
+        const walletAddress = walletResult.addresses?.[0]?.address || 'No address available';
+        const publicKey = walletResult.publicKey || '';
+        
         console.log("✅ Wallet created with ID:", walletId);
-        console.log("✅ Wallet result:", walletResult);
-        
-        // Extract the actual wallet ID string - handle different possible types
-        let walletIdString: string;
-        if (typeof walletId === 'string') {
-          walletIdString = walletId;
-        } else if (walletId && typeof walletId === 'object' && 'walletId' in walletId) {
-          walletIdString = (walletId as any).walletId;
-        } else {
-          walletIdString = JSON.stringify(walletId);
-        }
-        
-        // Try to get the public key and derive Stacks address
-        let walletAddress = `Created with ID: ${walletIdString.slice(0, 8)}...`;
-        
-        try {
-          // Check if we have addresses or public keys in the result
-          if (walletResult.addresses && walletResult.addresses.length > 0) {
-            // If we have the compressed public key, derive Stacks address
-            const compressedPubKey = walletResult.addresses[0];
-            if (compressedPubKey && compressedPubKey.length === 66) { // 33 bytes * 2 hex chars
-              walletAddress = getAddressFromPublicKey(compressedPubKey, 'testnet');
-              console.log("✅ Derived Stacks address:", walletAddress);
-            } else {
-              console.log("⚠️ Public key format not recognized, using fallback address");
-            }
-          }
-        } catch (err) {
-          console.warn("Failed to derive Stacks address, using fallback:", err);
-        }
+        console.log("✅ Wallet address:", walletAddress);
+        console.log("✅ Public key:", publicKey);
         
         setWalletInfo({
-          walletId: walletIdString,
+          walletId: walletId,
           walletAddress: walletAddress,
           status: "active"
         });
 
         // Store wallet info in localStorage
-        localStorage.setItem("turnkey_wallet_id", walletIdString);
+        localStorage.setItem("turnkey_wallet_id", walletId);
         localStorage.setItem("turnkey_wallet_address", walletAddress);
+        localStorage.setItem("turnkey_wallet_public_key", publicKey);
         localStorage.setItem("walletInfo", JSON.stringify({
-          walletId: walletIdString,
+          walletId: walletId,
           address: walletAddress,
-          organizationId: subOrgId
+          publicKey: publicKey,
+          organizationId: storedSubOrgId
         }));
 
         alert("Wallet created successfully! Your embedded wallet is now ready.");
