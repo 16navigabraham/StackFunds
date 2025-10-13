@@ -13,6 +13,7 @@ import { WalletConnect } from "@/components/WalletConnect";
 
 const navLinks = [
   { href: "/create", label: "Create Link" },
+  { href: "/my-links", label: "My Links" },
   { href: "/wallet", label: "My Wallet" },
 ];
 

@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTurnkey } from '@turnkey/sdk-react';
+import WalletManagement from '@/components/WalletManagement';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -29,10 +31,10 @@ interface WalletData {
     publicKey: string;
   }>;
 }
-
 export default function WalletPage() {
-  const [wallet, setWallet] = useState<WalletData | null>(null);
+  const { authIframeClient } = useTurnkey();
   const [user, setUser] = useState<any>(null);
+  const [wallets, setWallets] = useState<any[]>([]);
   const [balance, setBalance] = useState<{
     stx: string;
     btc: string;
@@ -52,19 +54,45 @@ export default function WalletPage() {
   const [priceData, setPriceData] = useState<{ stx_usd: number; btc_usd: number }>({ stx_usd: 0, btc_usd: 0 });
   const [depositModalOpen, setDepositModalOpen] = useState(false);
 
-  // Check authentication and load wallet data
+  // Check for user session and load wallet data
   useEffect(() => {
-    const storedUser = localStorage.getItem('turnkey_user');
-    const storedWallet = localStorage.getItem('turnkey_wallet');
+    const initializeWallet = async () => {
+      setLoading(true);
+      
+      try {
+        // Check localStorage for user session
+        const storedSubOrgId = localStorage.getItem('turnkey_user_sub_org_id');
+        const storedEmail = localStorage.getItem('turnkey_user_email');
+        
+        if (storedSubOrgId) {
+          setUser({
+            organizationId: storedSubOrgId,
+            email: storedEmail
+          });
+          
+          // Check if user has a wallet
+          const walletId = localStorage.getItem('turnkey_wallet_id');
+          const walletAddress = localStorage.getItem('turnkey_wallet_address');
+          
+          if (walletId && walletAddress) {
+            const mockWallet = {
+              id: walletId,
+              accounts: [{ address: walletAddress }]
+            };
+            setWallets([mockWallet]);
+            await loadWalletData(mockWallet);
+          }
+          
+          await loadPriceData();
+        }
+      } catch (e) {
+        console.error("Error initializing wallet", e);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    if (storedUser && storedWallet) {
-      setUser(JSON.parse(storedUser));
-      const walletData = JSON.parse(storedWallet);
-      setWallet(walletData);
-      // Load real balance and transaction data
-      loadWalletData(walletData);
-      loadPriceData();
-    }
+    initializeWallet();
   }, [network]);
 
   const loadPriceData = async () => {
@@ -83,12 +111,12 @@ export default function WalletPage() {
     }
   };
 
-  const loadWalletData = async (walletData: WalletData) => {
-    if (!walletData.addresses || walletData.addresses.length === 0) {
+  const loadWalletData = async (walletData: any) => {
+    if (!walletData.accounts || walletData.accounts.length === 0) {
       return;
     }
 
-    const address = walletData.addresses[0].address;
+    const address = walletData.accounts[0].address;
     setBalance(prev => ({ ...prev, loading: true, error: null }));
 
     try {
@@ -200,8 +228,8 @@ export default function WalletPage() {
   const handleRefresh = async () => {
     setLoading(true);
     try {
-      if (wallet) {
-        await loadWalletData(wallet);
+      if (wallets.length > 0) {
+        await loadWalletData(wallets[0]);
         await loadPriceData();
       }
     } catch (err: any) {
@@ -211,8 +239,24 @@ export default function WalletPage() {
     }
   };
 
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <span>Loading your wallet...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Show login prompt if not authenticated
-  if (!user || !wallet) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -243,6 +287,25 @@ export default function WalletPage() {
             </p>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Show wallet creation prompt if authenticated but no wallets
+  if (wallets.length === 0) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome to Your Wallet</h1>
+            <p className="text-muted-foreground">
+              Your account is connected! Now create your wallet to get started.
+            </p>
+          </div>
+          
+          {/* Show wallet creation interface */}
+          <WalletManagement />
+        </div>
       </div>
     );
   }
@@ -423,11 +486,11 @@ export default function WalletPage() {
                         </p>
                         <div className="flex items-center justify-between p-2 bg-muted rounded mt-2">
                           <code className="text-xs font-mono break-all">
-                            {wallet?.addresses?.[0]?.address || 'No address available'}
+                            {wallets[0]?.accounts?.[0]?.address || 'No address available'}
                           </code>
-                          {wallet?.addresses?.[0] && (
+                          {wallets[0]?.accounts?.[0]?.address && (
                             <CopyButton 
-                              textToCopy={wallet.addresses[0].address} 
+                              textToCopy={wallets[0].accounts[0].address} 
                               className="ml-2 flex-shrink-0"
                             />
                           )}
@@ -448,7 +511,7 @@ export default function WalletPage() {
                           <ol className="text-xs space-y-1 list-decimal list-inside">
                             <li>Go to the sBTC bridge (link below)</li>
                             <li>Connect your Bitcoin wallet (with testnet BTC)</li>
-                            <li>Enter your Stacks address: <code className="bg-white/50 px-1 rounded">{wallet?.addresses?.[0]?.address?.substring(0, 10)}...</code></li>
+                            <li>Enter your Stacks address: <code className="bg-white/50 px-1 rounded">{wallets[0]?.accounts?.[0]?.address?.substring(0, 10)}...</code></li>
                             <li>Bridge will give you a Bitcoin address to send to</li>
                             <li>Send Bitcoin to that address (not this Stacks address)</li>
                             <li>sBTC appears in your Stacks wallet automatically</li>
@@ -483,8 +546,11 @@ export default function WalletPage() {
                               size="sm" 
                               className="w-full"
                               onClick={() => {
-                                const faucetUrl = `https://explorer.hiro.so/sandbox/faucet?address=${wallet?.addresses?.[0]?.address}`;
-                                window.open(faucetUrl, '_blank');
+                                const address = wallets[0]?.accounts?.[0]?.address;
+                                if (address) {
+                                  const faucetUrl = `https://explorer.hiro.so/sandbox/faucet?address=${address}`;
+                                  window.open(faucetUrl, '_blank');
+                                }
                               }}
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
@@ -542,7 +608,7 @@ export default function WalletPage() {
                         variant="outline" 
                         className="flex-1"
                         onClick={() => {
-                          const address = wallet?.addresses?.[0]?.address;
+                          const address = wallets[0]?.accounts?.[0]?.address;
                           if (address) {
                             const explorerUrl = network === 'testnet' 
                               ? `https://explorer.hiro.so/address/${address}?chain=testnet`
@@ -578,6 +644,14 @@ export default function WalletPage() {
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Create Payment Link
               </Button>
+              <Button 
+                onClick={() => window.location.href = '/my-links'} 
+                variant="outline" 
+                className="w-full"
+              >
+                <History className="mr-2 h-4 w-4" />
+                View My Links
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -593,11 +667,11 @@ export default function WalletPage() {
           <CardContent>
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <code className="text-sm font-mono break-all">
-                {wallet.addresses && wallet.addresses[0] ? wallet.addresses[0].address : 'No address available'}
+                {wallets[0]?.accounts?.[0]?.address || 'No address available'}
               </code>
-              {wallet.addresses && wallet.addresses[0] && (
+              {wallets[0]?.accounts?.[0]?.address && (
                 <CopyButton 
-                  textToCopy={wallet.addresses[0].address} 
+                  textToCopy={wallets[0].accounts[0].address} 
                   className="ml-2 flex-shrink-0"
                 />
               )}
@@ -617,7 +691,7 @@ export default function WalletPage() {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  const address = wallet?.addresses?.[0]?.address;
+                  const address = wallets[0]?.accounts?.[0]?.address;
                   if (address) {
                     const explorerUrl = network === 'testnet' 
                       ? `https://explorer.hiro.so/address/${address}?chain=testnet`

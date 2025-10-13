@@ -126,7 +126,11 @@ export async function GET(request: NextRequest) {
         .sort({ createdAt: -1 })
         .toArray();
 
-      return NextResponse.json(paymentLinks);
+      return NextResponse.json({
+        success: true,
+        paymentLinks,
+        total: paymentLinks.length
+      });
     }
 
     return NextResponse.json(

@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { shortenAddress } from '@/lib/utils';
 import CopyButton from '@/components/CopyButton';
+import { useTurnkey } from '@turnkey/sdk-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface PaymentLink {
   paymentLinkId: string;
@@ -36,21 +38,25 @@ interface PaymentLink {
 export default function PaymentPage() {
   const params = useParams();
   const paymentId = params.id as string;
+  const { authIframeClient } = useTurnkey();
+  const { toast } = useToast();
   
   const [paymentLink, setPaymentLink] = useState<PaymentLink | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [userWallet, setUserWallet] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
-    // Check if user has connected wallet
-    const storedWallet = localStorage.getItem('turnkey_wallet');
-    if (storedWallet) {
-      const walletData = JSON.parse(storedWallet);
-      setIsConnected(true);
-      setUserWallet(walletData.addresses?.[0]?.address || null);
-    }
+    const checkUserWallet = () => {
+      // Check if user has a wallet address stored
+      const storedAddress = localStorage.getItem('turnkey_wallet_address');
+      if (storedAddress) {
+        setUserWallet(storedAddress);
+      }
+    };
+    
+    checkUserWallet();
   }, []);
 
   useEffect(() => {
@@ -81,16 +87,59 @@ export default function PaymentPage() {
     window.location.href = '/auth';
   };
 
-  const handleMakePayment = () => {
-    if (!paymentLink || !isConnected) return;
+  const handleMakePayment = async () => {
+    if (!paymentLink || !userWallet) return;
     
-    // This would integrate with your wallet to make an sBTC payment
-    alert(`Making payment of ${paymentLink.amount} sBTC to ${paymentLink.creatorAddress}`);
-    // TODO: Implement actual payment logic with your wallet
+    setIsProcessingPayment(true);
+    
+    try {
+      // For now, show a detailed payment modal since we need to implement actual sBTC transactions
+      // In a real implementation, you would:
+      // 1. Create an sBTC transaction
+      // 2. Sign it with Turnkey
+      // 3. Broadcast it to the network
+      // 4. Update the payment link status
+      
+      const confirmed = confirm(
+        `Confirm Payment Details:\n\n` +
+        `Amount: ${paymentLink.amount} sBTC\n` +
+        `To: ${paymentLink.creatorAddress}\n` +
+        `From: ${userWallet}\n\n` +
+        `Note: This is a demo. In production, this would create and broadcast a real sBTC transaction.`
+      );
+      
+      if (confirmed) {
+        // Simulate payment processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        toast({
+          title: "Payment Initiated",
+          description: `Successfully initiated payment of ${paymentLink.amount} sBTC`,
+        });
+        
+        // In real implementation, update the payment status in database
+        console.log('Payment would be processed:', {
+          from: userWallet,
+          to: paymentLink.creatorAddress,
+          amount: paymentLink.amount,
+          paymentLinkId: paymentLink.paymentLinkId
+        });
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Failed to process payment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const isExpired = paymentLink ? new Date() > new Date(paymentLink.expiresAt) : false;
   const isActive = paymentLink?.status === 'active' && !isExpired;
+  const isConnected = !!userWallet;
 
   if (loading) {
     return (
@@ -247,17 +296,25 @@ export default function PaymentPage() {
                     Connect your Stacks wallet to make sBTC payments
                   </p>
                 </div>
-                <Button onClick={handleConnectWallet} size="lg" className="w-full">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
-                </Button>
+                <div className="space-y-3">
+                  <Button onClick={handleConnectWallet} size="lg" className="w-full">
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Connect Wallet to Pay
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    You'll be redirected to create or login to your Stacks wallet
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <Alert>
                   <Wallet className="h-4 w-4" />
                   <AlertDescription>
-                    Connected: {shortenAddress(userWallet || '', 8)}
+                    <div className="flex items-center justify-between">
+                      <span>Connected: {shortenAddress(userWallet || '', 8)}</span>
+                      <CopyButton textToCopy={userWallet || ''} className="h-6 w-6" />
+                    </div>
                   </AlertDescription>
                 </Alert>
                 
@@ -265,12 +322,14 @@ export default function PaymentPage() {
                   onClick={handleMakePayment} 
                   size="lg" 
                   className="w-full"
-                  disabled={!isActive}
+                  disabled={!isActive || isProcessingPayment}
                 >
                   <Bitcoin className="mr-2 h-4 w-4" />
-                  {isActive 
-                    ? `Pay ${paymentLink.amount} sBTC` 
-                    : 'Payment Unavailable'
+                  {isProcessingPayment 
+                    ? 'Processing Payment...'
+                    : isActive 
+                      ? `Pay ${paymentLink.amount} sBTC` 
+                      : 'Payment Unavailable'
                   }
                 </Button>
 

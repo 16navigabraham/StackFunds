@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTurnkey } from "@turnkey/sdk-react";
+import { getAddressFromPublicKey } from '@stacks/transactions';
 
 interface WalletInfo {
   walletId: string;
@@ -161,7 +162,7 @@ export default function WalletManagement() {
             curve: "CURVE_SECP256K1",
             pathFormat: "PATH_FORMAT_BIP32",
             path: "m/44'/5757'/0'/0/0",
-            addressFormat: "ADDRESS_FORMAT_BITCOIN_TESTNET_P2WPKH",
+            addressFormat: "ADDRESS_FORMAT_COMPRESSED",
           }
         ]
       });
@@ -169,6 +170,7 @@ export default function WalletManagement() {
       if (walletResult && walletResult.walletId) {
         const walletId = walletResult.walletId;
         console.log("✅ Wallet created with ID:", walletId);
+        console.log("✅ Wallet result:", walletResult);
         
         // Extract the actual wallet ID string - handle different possible types
         let walletIdString: string;
@@ -180,7 +182,24 @@ export default function WalletManagement() {
           walletIdString = JSON.stringify(walletId);
         }
         
-        const walletAddress = `Created with ID: ${walletIdString.slice(0, 8)}...`;
+        // Try to get the public key and derive Stacks address
+        let walletAddress = `Created with ID: ${walletIdString.slice(0, 8)}...`;
+        
+        try {
+          // Check if we have addresses or public keys in the result
+          if (walletResult.addresses && walletResult.addresses.length > 0) {
+            // If we have the compressed public key, derive Stacks address
+            const compressedPubKey = walletResult.addresses[0];
+            if (compressedPubKey && compressedPubKey.length === 66) { // 33 bytes * 2 hex chars
+              walletAddress = getAddressFromPublicKey(compressedPubKey, 'testnet');
+              console.log("✅ Derived Stacks address:", walletAddress);
+            } else {
+              console.log("⚠️ Public key format not recognized, using fallback address");
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to derive Stacks address, using fallback:", err);
+        }
         
         setWalletInfo({
           walletId: walletIdString,

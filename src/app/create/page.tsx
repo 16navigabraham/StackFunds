@@ -23,6 +23,7 @@ import { CheckCircle, QrCode, Copy, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { shortenAddress } from "@/lib/utils";
 import CopyButton from "@/components/CopyButton";
+import { useTurnkey } from "@turnkey/sdk-react";
 
 // Commented out problematic Turnkey imports
 // import { Turnkey } from "@turnkey/sdk-browser";
@@ -49,45 +50,32 @@ export default function CreateCampaignPage() {
   const [paymentLinkId, setPaymentLinkId] = useState<string>('');
   const [paymentLinkUrl, setPaymentLinkUrl] = useState<string>('');
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { authIframeClient } = useTurnkey();
   const [wallets, setWallets] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [isLoadingWallets, setIsLoadingWallets] = useState(true);
 
   useEffect(() => {
-    const fetchUserAndWallets = async () => {
-      try {
-        // Use localStorage instead of Turnkey SDK
-        const storedUser = localStorage.getItem('turnkey_user');
-        const storedWallet = localStorage.getItem('turnkey_wallet');
-        
-        if (storedUser && storedWallet) {
-          const userData = JSON.parse(storedUser);
-          const walletData = JSON.parse(storedWallet);
-          
-          console.log('Stored user data:', userData);
-          console.log('Stored wallet data:', walletData);
-          
-          setUser({
-            organizationId: userData.subOrgId || userData.organizationId,
-          });
-          
-          // Create mock wallet structure that matches the access pattern
-          const mockWallets = [{
-            walletId: walletData.walletId,
-            addresses: walletData.addresses || [{ address: 'No address available' }],
-            walletName: 'Default Wallet'
-          }];
-          
-          console.log('Mock wallets:', mockWallets);
-          setWallets(mockWallets);
-        } else {
-          console.log('No stored user or wallet data found');
+    const checkUser = () => {
+      // Check localStorage for user session
+      const storedUser = localStorage.getItem('turnkey_user_sub_org_id');
+      const storedWallet = localStorage.getItem('turnkey_wallet_address');
+      
+      if (storedUser) {
+        setUser({ organizationId: storedUser });
+        if (storedWallet) {
+          setWallets([{
+            accounts: [{ address: storedWallet }]
+          }]);
         }
-      } catch (e) {
-        console.error("Error fetching user or wallets", e);
+      } else {
+        router.push('/auth');
       }
+      setIsLoadingWallets(false);
     };
-    fetchUserAndWallets();
-  }, []);
+    
+    checkUser();
+  }, [router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -101,7 +89,8 @@ export default function CreateCampaignPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || wallets.length === 0) {
-      alert('Please connect your wallet first');
+      alert('Please connect your wallet first. Go to the wallet page to create one.');
+      router.push('/wallet');
       return;
     }
 
@@ -155,9 +144,9 @@ export default function CreateCampaignPage() {
     router.push('/wallet');
   }
 
-  // Fix the wallet address access to match the actual data structure
-  const walletAddress = wallets.length > 0 && wallets[0]?.addresses?.length > 0 
-    ? wallets[0].addresses[0].address 
+  // Get wallet address from Turnkey wallet structure
+  const walletAddress = wallets.length > 0 && wallets[0]?.accounts?.length > 0 
+    ? wallets[0].accounts[0].address 
     : 'No wallet address available';
 
 
@@ -319,6 +308,16 @@ export default function CreateCampaignPage() {
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Preview Link
+              </Button>
+              <Button 
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setIsSuccessModalOpen(false);
+                  router.push('/my-links');
+                }}
+              >
+                View My Links
               </Button>
               <Button onClick={handleModalClose} className="flex-1">
                 Back to Wallet

@@ -257,7 +257,7 @@ export default function TurnkeyAuth() {
               </div>
               {wallet.addresses && wallet.addresses.length > 0 && (
                 <div className="space-y-1">
-                  <span className="text-sm font-medium text-blue-600">Bitcoin Testnet Address:</span>
+                  <span className="text-sm font-medium text-blue-600">Stacks Testnet Address:</span>
                   <div className="text-xs text-blue-900 font-mono break-all bg-white p-2 rounded border">
                     {wallet.addresses[0].address}
                   </div>
