@@ -33,6 +33,7 @@ interface WalletData {
   }>;
 }
 export default function WalletPage() {
+  const router = useRouter();
   const { authIframeClient } = useTurnkey();
   const [user, setUser] = useState<any>(null);
   const [wallets, setWallets] = useState<any[]>([]);
