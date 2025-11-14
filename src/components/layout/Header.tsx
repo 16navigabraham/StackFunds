@@ -38,13 +38,13 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Logo />
           {showNav && (
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium tracking-tight">
               {navLinks.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    "transition-colors hover:text-foreground/80",
+                    "transition-colors hover:text-foreground/80 font-medium",
                     pathname.startsWith(href) ? "text-foreground" : "text-foreground/60"
                   )}
                 >

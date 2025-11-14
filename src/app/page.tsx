@@ -42,29 +42,29 @@ export default function Home() {
       <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-accent/20 rounded-full filter blur-3xl animate-blob animation-delay-2000"></div>
 
       <div className="container max-w-3xl px-4 md:px-6 z-10 space-y-6">
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl font-display">
           Welcome to StackFund
         </h1>
-        <p className="mx-auto max-w-prose text-foreground/80 md:text-lg leading-relaxed">
+        <p className="mx-auto max-w-prose text-foreground/80 md:text-xl leading-relaxed font-light">
           Your gateway to seamless Web3 payments on the Bitcoin network. 
           StackFund empowers you to effortlessly create and manage payment links on Stacks Testnet, 
           enabling instant crypto transactions with unparalleled ease.
         </p>
-        <p className="mx-auto max-w-prose text-foreground/70 text-base leading-relaxed">
+        <p className="mx-auto max-w-prose text-foreground/70 text-base md:text-lg leading-relaxed">
           Powered by Turnkey's cutting-edge embedded wallet technology, every user receives an instant, 
           secure wallet upon signup — no complex setup required. Create your payment link in seconds, 
           share it with anyone, and receive funds directly to your decentralized wallet.
         </p>
-        <div className="flex flex-col sm:flex-row gap-2 items-center justify-center text-sm text-foreground/60">
-          <span className="flex items-center gap-1">
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-center text-sm md:text-base text-foreground/60 font-medium">
+          <span className="flex items-center gap-1.5">
             ✓ Non-custodial security
           </span>
-          <span className="hidden sm:block">•</span>
-          <span className="flex items-center gap-1">
+          <span className="hidden sm:block text-foreground/30">•</span>
+          <span className="flex items-center gap-1.5">
             ✓ Instant transactions
           </span>
-          <span className="hidden sm:block">•</span>
-          <span className="flex items-center gap-1">
+          <span className="hidden sm:block text-foreground/30">•</span>
+          <span className="flex items-center gap-1.5">
             ✓ Zero setup required
           </span>
         </div>

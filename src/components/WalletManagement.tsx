@@ -120,12 +120,12 @@ export default function WalletManagement() {
             <div className="border rounded-lg p-4">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <p className="font-medium">Your Wallet</p>
-                  <p className="text-sm text-muted-foreground font-mono mt-1 break-all">
+                  <p className="font-semibold text-base">Your Wallet</p>
+                  <p className="text-sm text-muted-foreground font-mono mt-2 break-all tracking-tight">
                     {walletInfo.walletAddress}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Status: <span className="capitalize">{walletInfo.status}</span>
+                  <p className="text-xs text-muted-foreground mt-3 font-medium">
+                    Status: <span className="capitalize text-green-600 dark:text-green-400">{walletInfo.status}</span>
                   </p>
                 </div>
               </div>
@@ -134,11 +134,11 @@ export default function WalletManagement() {
         ) : hasCheckedWallet ? (
           <div className="text-center py-8">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-6">
-              <h3 className="font-semibold text-green-800 dark:text-green-300 mb-2">Create Your Embedded Wallet</h3>
-              <p className="text-green-700 dark:text-green-400 text-sm mb-4">
+              <h3 className="font-display font-semibold text-lg text-green-800 dark:text-green-300 mb-3">Create Your Embedded Wallet</h3>
+              <p className="text-green-700 dark:text-green-400 text-sm leading-relaxed mb-5">
                 Create your embedded wallet to start using Bitcoin testnet addresses with Stacks testnet4 and sBTC.
               </p>
-              <Button onClick={createWallet} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white">
+              <Button onClick={createWallet} disabled={loading} className="bg-green-600 hover:bg-green-700 text-white font-medium">
                 {loading ? "Creating Wallet..." : "Create Your Embedded Wallet"}
               </Button>
             </div>
