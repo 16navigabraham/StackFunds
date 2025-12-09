@@ -46,14 +46,15 @@ export default function Home() {
           Welcome to StackFund
         </h1>
         <p className="mx-auto max-w-prose text-foreground/80 md:text-xl leading-relaxed font-light">
-          Your gateway to seamless Web3 payments on the Bitcoin network. 
-          StackFund empowers you to effortlessly create and manage payment links on Stacks Testnet, 
-          enabling instant crypto transactions with unparalleled ease.
+          Transform how you handle payments on Bitcoin's most innovative layer. 
+          Create professional payment links instantly, accept STX tokens seamlessly, 
+          and manage transactions with enterprise-grade security — all while maintaining complete control of your funds.
         </p>
         <p className="mx-auto max-w-prose text-foreground/70 text-base md:text-lg leading-relaxed">
-          Powered by Turnkey's cutting-edge embedded wallet technology, every user receives an instant, 
-          secure wallet upon signup — no complex setup required. Create your payment link in seconds, 
-          share it with anyone, and receive funds directly to your decentralized wallet.
+          Built on Bitcoin's most advanced layer-2 solution, StackFund leverages Turnkey's enterprise-grade 
+          wallet infrastructure to deliver instant, secure payment experiences. Generate shareable payment 
+          links in seconds and receive STX tokens directly to your self-custody wallet — no technical 
+          expertise required.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center text-sm md:text-base text-foreground/60 font-medium">
           <span className="flex items-center gap-1.5">
